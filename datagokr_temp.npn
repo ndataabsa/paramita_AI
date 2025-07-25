@@ -1,0 +1,97 @@
+{
+  "cells": [
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_1"
+      },
+      "source": "{\n  \"job_type\": \"request\",\n  \"action\": \"get\",\n  \"params\": {\n    \"url\": \"https://opendart.fss.or.kr/api/corpCode.xml&crtfc_key=d8d1d3a2be229e65abec1fb1ed993d9340e72278\"\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-16T03:16:22.363Z",
+          "output": "공용 데이터 딕셔너리 초기화됨\nJob 'Crawl_1' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_1']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_2"
+      },
+      "source": "{\n  \"job_type\": \"do\",\n  \"action\": \"click\",\n  \"params\": {\n    \"focus\": \"{\\\"xpath\\\": \\\"//button[@id='login']\\\"}\",\n    \"speed\": 1\n  }\n}",
+      "output_history": []
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_3"
+      },
+      "source": "{\n  \"job_type\": \"python\",\n  \"action\": \"file\",\n  \"params\": {\n    \"python_type\": \"code\",\n    \"script_path\": \"/home/PROJECT/HST/src/API/test.py\",\n    \"to\": \"test\",\n    \"arg_count\": \"1\",\n    \"code\": \"print('Hello World')\",\n    \"from_0\": \"asdqwdqw\"\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-15T04:13:36.292Z",
+          "output": "Job 'Crawl_3' 실행 결과: {'result': False, 'message': \"'str' object cannot be interpreted as an integer\", 'data': None}\nJob 결과가 shared_dict['Crawl_3']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": "shared_dict",
+      "output_history": [
+        {
+          "timestamp": "2025-07-16T03:18:06.740Z",
+          "output": "{'Crawl_1': {'result': True, 'message': None, 'data': None}}",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": "ㅇㅁㄴㅇㅁㄴㅇㄴsdsssssss",
+      "output_history": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": "asdasd",
+      "output_history": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": "from CLASS import class_job\nimport sys\nx={}\nv=class_job.Job('test',{'type':'python','python_type':'file','script_path':'/home/PROJECT/HST/src/API/test.py'},x)\nq=v.run()\nprint(q)",
+      "output_history": [
+        {
+          "timestamp": "2025-07-15T04:15:09.485Z",
+          "output": "{'result': False, 'message': \"local variable 'sys' referenced before assignment\", 'data': None}\n",
+          "execution_count": 1
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.0"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 4
+}

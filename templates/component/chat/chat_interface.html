@@ -1,0 +1,103 @@
+<!-- 채팅 인터페이스 컴포넌트 (우측 패널용) -->
+<div class="chat-container">
+    <!-- 채팅 헤더 -->
+    <div class="chat-header">
+        <div class="chat-title-info">
+            <h3 id="currentChatTitle">🤖 AI 어시스턴트</h3>
+            <span id="currentChatStatus" class="chat-status">온라인</span>
+        </div>
+        <div class="chat-header-controls">
+            <button class="chat-btn" onclick="clearCurrentChat()" title="채팅 지우기">
+                🗑️
+            </button>
+            <button class="chat-btn" onclick="toggleChatSettings()" title="설정">
+                ⚙️
+            </button>
+        </div>
+    </div>
+
+    <!-- 채팅 메시지 영역 -->
+    <div class="chat-messages" id="chatMessages">
+        <!-- 샘플 메시지들 -->
+        <div class="message user-message">
+            <div class="message-content">
+                안녕하세요! 파이썬 코드 리팩토링에 대해 질문이 있습니다.
+            </div>
+            <div class="message-time">오후 2:30</div>
+        </div>
+        
+        <div class="message ai-message">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                안녕하세요! 파이썬 리팩토링에 대해 도움을 드리겠습니다. 어떤 부분의 코드를 개선하고 싶으신가요?
+            </div>
+            <div class="message-time">오후 2:31</div>
+        </div>
+        
+        <div class="message user-message">
+            <div class="message-content">
+                중복된 코드가 많은 함수들을 정리하고 싶어요.
+            </div>
+            <div class="message-time">오후 2:32</div>
+        </div>
+        
+        <div class="message ai-message typing">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 채팅 입력 영역 -->
+    <div class="chat-input-area">
+        <div class="chat-input-container">
+            <textarea 
+                id="chatInput" 
+                class="chat-input" 
+                placeholder="메시지를 입력하세요... (Shift+Enter: 줄바꿈, Enter: 전송)"
+                onkeydown="handleChatKeydown(event)"
+                rows="1"></textarea>
+            <button class="send-btn" onclick="sendMessage()">
+                <span class="send-icon">📤</span>
+            </button>
+        </div>
+        <div class="chat-input-footer">
+            <div class="input-hints">
+                <span class="hint">💡 코드는 ```으로 감싸주세요</span>
+                <span class="char-count" id="charCount">0/2000</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 패널 (숨김) -->
+    <div class="chat-settings" id="chatSettings" style="display: none;">
+        <div class="settings-header">
+            <h4>채팅 설정</h4>
+            <button class="close-btn" onclick="toggleChatSettings()">✕</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-item">
+                <label>모델 선택:</label>
+                <select id="modelSelect">
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5">GPT-3.5 Turbo</option>
+                    <option value="claude">Claude</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>온도 설정:</label>
+                <input type="range" id="temperatureSlider" min="0" max="1" step="0.1" value="0.7">
+                <span id="temperatureValue">0.7</span>
+            </div>
+            <div class="setting-item">
+                <label>시스템 프롬프트:</label>
+                <textarea id="systemPrompt" rows="3" placeholder="시스템 메시지를 입력하세요...">당신은 도움이 되는 AI 프로그래밍 어시스턴트입니다.</textarea>
+            </div>
+        </div>
+    </div>
+</div> 

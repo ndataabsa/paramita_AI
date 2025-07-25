@@ -1,0 +1,499 @@
+🚀 NP Notebook을 시작합니다...
+📁 NP Notebook: http://localhost:53301/file_browser
+📓 코드 노트북: http://localhost:53301/notebook
+🐍 Python 커널: http://localhost:53301/kernel
+🏠 메인 페이지: http://localhost:53301/
+ * Serving Flask app 'jupyapp'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:53301
+ * Running on http://10.128.0.31:53301
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 863-315-869
+211.245.48.249 - - [10/Jul/2025 12:05:08] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+211.245.48.249 - - [10/Jul/2025 12:05:09] "[36mGET /static/css/file_browser.css?v=2.1 HTTP/1.1[0m" 304 -
+211.245.48.249 - - [10/Jul/2025 12:05:09] "GET /api/job_types HTTP/1.1" 200 -
+211.245.48.249 - - [10/Jul/2025 12:05:09] "GET /api/files HTTP/1.1" 200 -
+211.245.48.249 - - [10/Jul/2025 12:05:09] "GET /api/kernels HTTP/1.1" 200 -
+211.245.48.249 - - [10/Jul/2025 12:05:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+211.245.48.249 - - [10/Jul/2025 12:05:12] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:11:23] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:11:23] "[36mGET /static/css/file_browser.css?v=2.1 HTTP/1.1[0m" 304 -
+114.204.39.107 - - [10/Jul/2025 12:11:24] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:11:24] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:11:24] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:31:42] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:31:43] "[36mGET /static/css/file_browser.css?v=2.1 HTTP/1.1[0m" 304 -
+114.204.39.107 - - [10/Jul/2025 12:31:43] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:31:43] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:31:43] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:31:50] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "GET /static/css/file_browser.css?v=2.1 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 12:32:00] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:32:03] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:39:25] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:39:25] "[36mGET /static/css/file_browser.css?v=2.1 HTTP/1.1[0m" 304 -
+114.204.39.107 - - [10/Jul/2025 12:39:26] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:39:26] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:39:26] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:39:28] "GET /api/files/content?path=app.py HTTP/1.1" 200 -
+211.231.103.92 - - [10/Jul/2025 12:40:47] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:42:14] "GET /file_browser?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:42:14] "[36mGET /static/css/file_browser.css?v=2.1 HTTP/1.1[0m" 304 -
+114.204.39.107 - - [10/Jul/2025 12:42:14] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:42:14] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:42:15] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 12:42:17] "GET /api/files/content?path=jupyapp.py HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 13:53:33] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+ * Detected change in '/data/PROJECT_CRAWLER/jupyapp.py', reloading
+🚀 NP Notebook을 시작합니다...
+📁 NP Notebook: http://localhost:53301/file_browser
+📓 코드 노트북: http://localhost:53301/notebook
+🐍 Python 커널: http://localhost:53301/kernel
+🏠 메인 페이지: http://localhost:53301/
+모든 커널이 정리되었습니다.
+ * Restarting with stat
+Traceback (most recent call last):
+  File "/data/PROJECT_CRAWLER/jupyapp.py", line 173, in <module>
+    def notebook_page():
+  File "/usr/local/python3.10/lib/python3.10/site-packages/flask/scaffold.py", line 435, in decorator
+    self.add_url_rule(rule, endpoint, f, **options)
+  File "/usr/local/python3.10/lib/python3.10/site-packages/flask/scaffold.py", line 50, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "/usr/local/python3.10/lib/python3.10/site-packages/flask/app.py", line 1059, in add_url_rule
+    raise AssertionError(
+AssertionError: View function mapping is overwriting an existing endpoint function: notebook_page
+모든 커널이 정리되었습니다.
+모든 커널이 정리되었습니다.
+🚀 NP Notebook을 시작합니다...
+📓 NP Notebook: http://localhost:53301/notebook
+🐍 Python 커널: http://localhost:53301/kernel
+🏠 메인 페이지: http://localhost:53301/
+ * Serving Flask app 'jupyapp'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:53301
+ * Running on http://10.128.0.31:53301
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 858-245-084
+114.204.39.107 - - [10/Jul/2025 16:00:57] "GET / HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:00] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:00] "GET /static/css/notebook.css?v=2.1 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:01] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:01] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:01] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:10] "GET /api/files/content?path=jupyapp.py HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:01:15] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:02:07] "[36mGET /static/css/notebook.css?v=2.1 HTTP/1.1[0m" 304 -
+114.204.39.107 - - [10/Jul/2025 16:04:02] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:02] "GET /static/css/notebook.css?v=2.1 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:02] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:02] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:02] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "GET /static/css/notebook.css?v=2.1 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:04:10] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:04:13] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:53] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:53] "GET /static/css/notebook.css?v=2.2 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:54] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:54] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:54] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:09:54] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:10:02] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:44] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:44] "GET /static/css/notebook.css?v=2.3 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:45] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:45] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:45] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:12:45] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:12:48] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:39] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:39] "GET /static/css/notebook.css?v=2.4 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:40] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:40] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:40] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:18:40] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:18:41] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:34] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:34] "GET /static/css/notebook.css?v=2.5 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:35] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:35] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:35] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:20:35] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:20:38] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:05] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:06] "GET /static/css/notebook.css?v=2.6 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:06] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:06] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:06] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:22:06] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:10] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:47] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:47] "GET /static/css/notebook.css?v=2.7 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:48] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:48] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:48] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:22:48] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:22:50] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:31] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:31] "GET /static/css/notebook.css?v=2.7 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:32] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:27:32] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:32] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:32] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:34] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:27:56] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:03] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:05] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:05] "GET /static/css/notebook.css?v=2.7 HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:06] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:06] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:06] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:28:06] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.204.39.107 - - [10/Jul/2025 16:28:08] "GET /api/files/content?path=test.npn HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:50:34] "POST /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:50:43] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:50:43] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:50:43] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:50:44] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:51:10] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:51:10] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:51:10] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:51:10] "POST /api/files/save HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:52:36] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:52:36] "POST /api/files/save HTTP/1.1" 200 -
+🚀 NP Notebook을 시작합니다...
+📓 NP Notebook: http://localhost:53301/notebook
+🐍 Python 커널: http://localhost:53301/kernel
+🏠 메인 페이지: http://localhost:53301/
+커널 생성 완료: kernel_0_b1a92769
+=== 커널 실행 디버그 ===
+코드: import sys
+import os
+# 프로젝트 루트 경로를 동적으로 찾기
+current_dir = os.getcwd()
+# CLASS나 MODULE 폴더가 있는지 확인하고 경로 설정
+if os.path.exists(os.path.join(current_dir, 'CLASS')):
+    sys.path.append(os.path.join(current_dir, 'CLASS'))
+    sys.path.append(os.path.join(current_dir, 'MODULE'))
+elif os.path.exists(os.path.join(current_dir, '..', 'CLASS')):
+    sys.path.append(os.path.join(current_dir, '..', 'CLASS'))
+    sys.path.append(os.path.join(current_dir, '..', 'MODULE'))
+else:
+    print("CLASS/MODULE 폴더를 찾을 수 없습니다. 경로를 확인해주세요.")
+    print(f"현재 디렉토리: {current_dir}")
+from class_job import Job
+
+# 커널 네임스페이스에서 shared_dict 사용
+if 'shared_dict' not in globals():
+    globals()['shared_dict'] = {}
+    print("공용 데이터 딕셔너리 초기화됨")
+shared_dict = globals()['shared_dict']
+
+# Crawl_1 - test list
+job_name = "Crawl_1"
+# job args 구성
+job_args = {
+    "type": "test",
+    "test_type": "list",
+    "name": "my_list",
+    "items": "apple,banana,orange",
+    "print_result": "true"
+}
+
+# Job 객체 생성 및 실행
+try:
+    job = Job(job_name, job_args, shared_dict)
+    result = job.run()
+    print(f"Job '{job_name}' 실행 결과: {result}")
+    # job 결과를 shared_dict에 job name을 키로 저장
+    shared_dict[job_name] = result
+    print(f"Job 결과가 shared_dict['{job_name}']에 저장되었습니다.")
+    if hasattr(result, 'data') and result.data is not None:
+        print(f"결과 데이터: {result.data}")
+    if hasattr(result, 'message') and result.message:
+        print(f"메시지: {result.message}")
+except Exception as e:
+    print(f"Job 실행 중 오류 발생: {str(e)}")
+    import traceback
+    traceback.print_exc()
+
+print("Job 실행 완료")
+
+stdout: '공용 데이터 딕셔너리 초기화됨
+Job 'Crawl_1' 실행 결과: {'result': True, 'message': "리스트 'my_list' = ['apple', 'banana', 'orange'] 저장 및 출력 완료", 'data': None}
+Job 결과가 shared_dict['Crawl_1']에 저장되었습니다.
+Job 실행 완료
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+=== 커널 실행 디버그 ===
+코드: print('test입니다')
+stdout: 'test입니다
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+=== 커널 실행 디버그 ===
+코드: import sys
+import os
+# 프로젝트 루트 경로를 동적으로 찾기
+current_dir = os.getcwd()
+# CLASS나 MODULE 폴더가 있는지 확인하고 경로 설정
+if os.path.exists(os.path.join(current_dir, 'CLASS')):
+    sys.path.append(os.path.join(current_dir, 'CLASS'))
+    sys.path.append(os.path.join(current_dir, 'MODULE'))
+elif os.path.exists(os.path.join(current_dir, '..', 'CLASS')):
+    sys.path.append(os.path.join(current_dir, '..', 'CLASS'))
+    sys.path.append(os.path.join(current_dir, '..', 'MODULE'))
+else:
+    print("CLASS/MODULE 폴더를 찾을 수 없습니다. 경로를 확인해주세요.")
+    print(f"현재 디렉토리: {current_dir}")
+from class_job import Job
+
+# 커널 네임스페이스에서 shared_dict 사용
+if 'shared_dict' not in globals():
+    globals()['shared_dict'] = {}
+    print("공용 데이터 딕셔너리 초기화됨")
+shared_dict = globals()['shared_dict']
+
+# Crawl_3 - request selenium
+job_name = "Crawl_3"
+# job args 구성
+job_args = {
+    "type": "request",
+    "url": "https://n-data.co.kr",
+    "wait_time": 2,
+    "request_type": "selenium"
+}
+
+# Job 객체 생성 및 실행
+try:
+    job = Job(job_name, job_args, shared_dict)
+    result = job.run()
+    print(f"Job '{job_name}' 실행 결과: {result}")
+    # job 결과를 shared_dict에 job name을 키로 저장
+    shared_dict[job_name] = result
+    print(f"Job 결과가 shared_dict['{job_name}']에 저장되었습니다.")
+    if hasattr(result, 'data') and result.data is not None:
+        print(f"결과 데이터: {result.data}")
+    if hasattr(result, 'message') and result.message:
+        print(f"메시지: {result.message}")
+except Exception as e:
+    print(f"Job 실행 중 오류 발생: {str(e)}")
+    import traceback
+    traceback.print_exc()
+
+print("Job 실행 완료")
+
+stdout: 'SYSTEM_SELENIUM 엔진이 생성되었습니다.
+엔진 :0:으로 지정됨
+드라이버 0가 https://n-data.co.kr로 시작되었습니다.
+Job 'Crawl_3' 실행 결과: {'result': True, 'message': 'Selenium으로 https://n-data.co.kr 접속 완료', 'data': None}
+Job 결과가 shared_dict['Crawl_3']에 저장되었습니다.
+Job 실행 완료
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+=== 커널 실행 디버그 ===
+코드: print(shared_dict)
+stdout: '{'my_list': ['apple', 'banana', 'orange'], 'Crawl_1': {'result': True, 'message': "리스트 'my_list' = ['apple', 'banana', 'orange'] 저장 및 출력 완료", 'data': None}, 'SYSTEM_SELENIUM': <MODULE.module_engine_selenium.engine object at 0x75a3c42ffca0>, 'Crawl_3': {'result': True, 'message': 'Selenium으로 https://n-data.co.kr 접속 완료', 'data': None}}
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+=== 커널 실행 디버그 ===
+코드: import sys
+import os
+# 프로젝트 루트 경로를 동적으로 찾기
+current_dir = os.getcwd()
+# CLASS나 MODULE 폴더가 있는지 확인하고 경로 설정
+if os.path.exists(os.path.join(current_dir, 'CLASS')):
+    sys.path.append(os.path.join(current_dir, 'CLASS'))
+    sys.path.append(os.path.join(current_dir, 'MODULE'))
+elif os.path.exists(os.path.join(current_dir, '..', 'CLASS')):
+    sys.path.append(os.path.join(current_dir, '..', 'CLASS'))
+    sys.path.append(os.path.join(current_dir, '..', 'MODULE'))
+else:
+    print("CLASS/MODULE 폴더를 찾을 수 없습니다. 경로를 확인해주세요.")
+    print(f"현재 디렉토리: {current_dir}")
+from class_job import Job
+
+# 커널 네임스페이스에서 shared_dict 사용
+if 'shared_dict' not in globals():
+    globals()['shared_dict'] = {}
+    print("공용 데이터 딕셔너리 초기화됨")
+shared_dict = globals()['shared_dict']
+
+# Crawl_5 - do click
+job_name = "Crawl_5"
+# job args 구성
+job_args = {
+    "type": "do",
+    "focus": {
+        "xpath": "/html/body/nav/div/div[2]/ul/li[5]/a"
+    },
+    "speed": 1,
+    "selector": "button",
+    "wait": 1,
+    "action": "click"
+}
+
+# Job 객체 생성 및 실행
+try:
+    job = Job(job_name, job_args, shared_dict)
+    result = job.run()
+    print(f"Job '{job_name}' 실행 결과: {result}")
+    # job 결과를 shared_dict에 job name을 키로 저장
+    shared_dict[job_name] = result
+    print(f"Job 결과가 shared_dict['{job_name}']에 저장되었습니다.")
+    if hasattr(result, 'data') and result.data is not None:
+        print(f"결과 데이터: {result.data}")
+    if hasattr(result, 'message') and result.message:
+        print(f"메시지: {result.message}")
+except Exception as e:
+    print(f"Job 실행 중 오류 발생: {str(e)}")
+    import traceback
+    traceback.print_exc()
+
+print("Job 실행 완료")
+
+stdout: 'Traceback (most recent call last):
+  File "/data/PROJECT_CRAWLER/CLASS/class_job.py", line 43, in run
+    xpath = element.to_xpath()
+AttributeError: 'str' object has no attribute 'to_xpath'
+
+Job 'Crawl_5' 실행 결과: {'result': False, 'message': 'Traceback (most recent call last):\n  File "/data/PROJECT_CRAWLER/CLASS/class_job.py", line 43, in run\n    xpath = element.to_xpath()\nAttributeError: \'str\' object has no attribute \'to_xpath\'\n', 'data': None}
+Job 결과가 shared_dict['Crawl_5']에 저장되었습니다.
+Job 실행 완료
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+=== 커널 실행 디버그 ===
+114.204.39.107 - - [10/Jul/2025 16:53:17] "POST /api/kernels/kernel_0_b1a92769/execute HTTP/1.1" 200 -
+114.204.39.107 - - [10/Jul/2025 16:53:18] "POST /api/files/save HTTP/1.1" 200 -
+ * Detected change in '/data/PROJECT_CRAWLER/CLASS/class_job.py', reloading
+코드: import sys
+import os
+# 프로젝트 루트 경로를 동적으로 찾기
+current_dir = os.getcwd()
+# CLASS나 MODULE 폴더가 있는지 확인하고 경로 설정
+if os.path.exists(os.path.join(current_dir, 'CLASS')):
+    sys.path.append(os.path.join(current_dir, 'CLASS'))
+    sys.path.append(os.path.join(current_dir, 'MODULE'))
+elif os.path.exists(os.path.join(current_dir, '..', 'CLASS')):
+    sys.path.append(os.path.join(current_dir, '..', 'CLASS'))
+    sys.path.append(os.path.join(current_dir, '..', 'MODULE'))
+else:
+    print("CLASS/MODULE 폴더를 찾을 수 없습니다. 경로를 확인해주세요.")
+    print(f"현재 디렉토리: {current_dir}")
+from class_job import Job
+
+# 커널 네임스페이스에서 shared_dict 사용
+if 'shared_dict' not in globals():
+    globals()['shared_dict'] = {}
+    print("공용 데이터 딕셔너리 초기화됨")
+shared_dict = globals()['shared_dict']
+
+# Crawl_5 - do click
+job_name = "Crawl_5"
+# job args 구성
+job_args = {
+    "type": "do",
+    "focus": {
+        "xpath": "//*[@id=\"bs-example-navbar-collapse-1\"]/ul/li[5]/a"
+    },
+    "speed": 1,
+    "selector": "button",
+    "wait": 1,
+    "action": "click"
+}
+
+# Job 객체 생성 및 실행
+try:
+    job = Job(job_name, job_args, shared_dict)
+    result = job.run()
+    print(f"Job '{job_name}' 실행 결과: {result}")
+    # job 결과를 shared_dict에 job name을 키로 저장
+    shared_dict[job_name] = result
+    print(f"Job 결과가 shared_dict['{job_name}']에 저장되었습니다.")
+    if hasattr(result, 'data') and result.data is not None:
+        print(f"결과 데이터: {result.data}")
+    if hasattr(result, 'message') and result.message:
+        print(f"메시지: {result.message}")
+except Exception as e:
+    print(f"Job 실행 중 오류 발생: {str(e)}")
+    import traceback
+    traceback.print_exc()
+
+print("Job 실행 완료")
+
+stdout: 'Traceback (most recent call last):
+  File "/data/PROJECT_CRAWLER/CLASS/class_job.py", line 43, in run
+    xpath = element.to_xpath()
+AttributeError: 'str' object has no attribute 'to_xpath'
+
+Job 'Crawl_5' 실행 결과: {'result': False, 'message': 'Traceback (most recent call last):\n  File "/data/PROJECT_CRAWLER/CLASS/class_job.py", line 43, in run\n    xpath = element.to_xpath()\nAttributeError: \'str\' object has no attribute \'to_xpath\'\n', 'data': None}
+Job 결과가 shared_dict['Crawl_5']에 저장되었습니다.
+Job 실행 완료
+'
+stderr: ''
+result_value: None
+result_value type: <class 'NoneType'>
+result_value str: 'None'
+========================
+커널 종료 시작: kernel_0_b1a92769
+커널 종료 완료: kernel_0_b1a92769
+모든 커널이 정리되었습니다.
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 858-245-084
+모든 커널이 정리되었습니다.
+🚀 NP Notebook을 시작합니다...
+📓 NP Notebook: http://localhost:53301/notebook
+🐍 Python 커널: http://localhost:53301/kernel
+🏠 메인 페이지: http://localhost:53301/
+ * Serving Flask app 'jupyapp'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:53301
+ * Running on http://192.168.0.4:53301
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 140-602-293
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /notebook?file=contraction.json HTTP/1.1" 200 -
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /static/css/notebook.css?v=2.7 HTTP/1.1" 304 -
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /static/js/screenshot-monitor.js HTTP/1.1" 304 -
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /api/job_types HTTP/1.1" 200 -
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /api/kernels HTTP/1.1" 200 -
+114.204.39.107 - - [13/Jul/2025 22:38:01] "GET /api/files HTTP/1.1" 200 -
+114.204.39.107 - - [13/Jul/2025 22:38:04] "GET /api/files/content?path=contraction.xml HTTP/1.1" 200 -

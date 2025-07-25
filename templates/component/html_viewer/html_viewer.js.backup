@@ -1,0 +1,424 @@
+// HTML 뷰어 컴포넌트
+class HTMLViewer {
+    constructor() {
+        this.iframe = null;
+        this.overlay = null;
+        this.highlightMode = 'hover'; // 'hover' 또는 'click'
+        this.currentHighlight = null;
+        this.currentInfo = null;
+        this.isInitialized = false;
+        this.currentHTML = '';
+        this.currentKernelId = null; // 현재 커널 ID
+        
+        this.init();
+    }
+    
+    init() {
+        this.iframe = document.getElementById('htmlPreview');
+        this.overlay = document.getElementById('previewOverlay');
+        
+        // iframe 로드 완료 후 초기화
+        this.iframe.addEventListener('load', () => {
+            this.setupElementHighlighting();
+            this.isInitialized = true;
+            this.updateStatus('ready', 'HTML 뷰어 준비됨');
+        });
+        
+        // 초기 상태 설정
+        this.showNoContent();
+    }
+    
+    // 커널 ID 설정
+    setKernelId(kernelId) {
+        this.currentKernelId = kernelId;
+        this.updateKernelInfo();
+        this.updateStatus('ready', `커널 ID 설정됨: ${kernelId || '없음'}`);
+    }
+    
+    // 커널 정보 업데이트
+    updateKernelInfo() {
+        const kernelInfo = document.getElementById('kernelInfo');
+        if (kernelInfo) {
+            kernelInfo.textContent = `커널: ${this.currentKernelId || '없음'}`;
+        }
+    }
+    
+    // 커널 ID 가져오기
+    getKernelId() {
+        return this.currentKernelId;
+    }
+    
+    // 현재 커널에서 shared_dict 가져오기
+    async getSharedDict() {
+        if (!this.currentKernelId) {
+            alert('커널이 없습니다. 먼저 커널을 생성해주세요.');
+            return null;
+        }
+        
+        try {
+            const response = await fetch(`/api/kernels/${this.currentKernelId}/namespace`);
+            const data = await response.json();
+            
+            if (data.success && data.namespace && data.namespace.shared_dict) {
+                return data.namespace.shared_dict;
+            } else {
+                // shared_dict가 없으면 생성
+                return {};
+            }
+        } catch (error) {
+            console.error('shared_dict 가져오기 실패:', error);
+            alert('shared_dict 가져오기 실패: ' + error.message);
+            return null;
+        }
+    }
+    
+    // 현재 커널의 shared_dict에 데이터 저장
+    async setSharedDictValue(key, value) {
+        if (!this.currentKernelId) {
+            alert('커널이 없습니다. 먼저 커널을 생성해주세요.');
+            return false;
+        }
+        
+        try {
+            // Python 코드로 shared_dict에 값 설정
+            const code = `
+if 'shared_dict' not in globals():
+    shared_dict = {}
+shared_dict['${key}'] = """${value}"""
+print(f"shared_dict['${key}'] 설정 완료")
+`;
+            
+            const response = await fetch(`/api/kernels/${this.currentKernelId}/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    code: code,
+                    timeout: 30.0
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log(`shared_dict['${key}'] 설정 완료`);
+                
+                // 저장 후 내용 확인
+                try {
+                    const sharedDict = await this.getSharedDict();
+                    if (sharedDict && sharedDict[key]) {
+                        console.log(`shared_dict['${key}'] 확인됨, 길이:`, sharedDict[key].length);
+                        console.log(`shared_dict['${key}'] 내용 미리보기:`, sharedDict[key].substring(0, 100) + '...');
+                    } else {
+                        console.log(`shared_dict['${key}'] 확인 실패`);
+                    }
+                } catch (error) {
+                    console.log('shared_dict 내용 확인 중 오류:', error);
+                }
+                
+                this.updateStatus('ready', `shared_dict['${key}'] 설정 완료`);
+                return true;
+            } else {
+                alert('shared_dict 설정 실패: ' + (data.error || '알 수 없는 오류'));
+                return false;
+            }
+        } catch (error) {
+            console.error('shared_dict 설정 실패:', error);
+            alert('shared_dict 설정 실패: ' + error.message);
+            return false;
+        }
+    }
+    
+    // HTML 설정 (외부에서 호출)
+    setHTML(htmlContent) {
+        this.currentHTML = htmlContent;
+        
+        if (!htmlContent || htmlContent.trim() === '') {
+            this.showNoContent();
+            return;
+        }
+        
+        this.renderHTML();
+    }
+    
+    // HTML 렌더링
+    renderHTML() {
+        if (!this.currentHTML || this.currentHTML.trim() === '') {
+            this.showNoContent();
+            return;
+        }
+        
+        this.updateStatus('loading', '렌더링 중...');
+        this.hideNoContent();
+        
+        try {
+            console.log('HTML 렌더링 시작, 내용 길이:', this.currentHTML.length);
+            
+            // srcdoc 속성만 사용 (보안상 안전)
+            this.iframe.srcdoc = this.currentHTML;
+            console.log('iframe srcdoc 방식으로 렌더링 완료');
+            
+            this.updateStatus('ready', 'HTML 렌더링 완료');
+        } catch (error) {
+            console.error('HTML 렌더링 오류:', error);
+            this.updateStatus('error', '렌더링 오류: ' + error.message);
+        }
+    }
+    
+    // 새로고침
+    refreshView() {
+        console.log('HTML 뷰어 새로고침 호출됨');
+        console.log('현재 HTML 내용 길이:', this.currentHTML ? this.currentHTML.length : 0);
+        
+        if (this.currentHTML) {
+            console.log('HTML 내용이 있음, 렌더링 실행');
+            this.renderHTML();
+        } else {
+            console.log('HTML 내용이 없음');
+            this.updateStatus('ready', '새로고침됨 - HTML 내용이 없습니다');
+        }
+    }
+    
+    // 뷰 지우기
+    clearView() {
+        this.currentHTML = '';
+        this.clearHighlight();
+        this.showNoContent();
+        this.updateStatus('ready', '뷰가 지워졌습니다');
+    }
+    
+    // 내용 없음 표시
+    showNoContent() {
+        const noContent = document.getElementById('noContent');
+        if (noContent) {
+            noContent.style.display = 'flex';
+        }
+        if (this.iframe) {
+            this.iframe.style.display = 'none';
+        }
+    }
+    
+    // 내용 없음 숨기기
+    hideNoContent() {
+        const noContent = document.getElementById('noContent');
+        if (noContent) {
+            noContent.style.display = 'none';
+        }
+        if (this.iframe) {
+            this.iframe.style.display = 'block';
+        }
+    }
+    
+    // 요소 하이라이팅 설정 (sandbox로 인해 비활성화)
+    setupElementHighlighting() {
+        // sandbox 환경에서는 iframe 접근이 제한되므로 하이라이팅 기능 비활성화
+        console.log('요소 하이라이팅 설정 - sandbox 환경으로 인해 비활성화됨');
+        this.updateStatus('ready', '하이라이팅 기능은 sandbox 환경에서 사용할 수 없습니다');
+    }
+    
+    // 요소 하이라이팅
+    highlightElement(element, event) {
+        this.clearHighlight();
+        
+        const rect = element.getBoundingClientRect();
+        const iframeRect = this.iframe.getBoundingClientRect();
+        
+        // iframe 내부 좌표를 부모 좌표로 변환
+        const highlightRect = {
+            left: iframeRect.left + rect.left,
+            top: iframeRect.top + rect.top,
+            width: rect.width,
+            height: rect.height
+        };
+        
+        // 하이라이트 요소 생성
+        this.currentHighlight = document.createElement('div');
+        this.currentHighlight.className = 'element-highlight';
+        this.currentHighlight.style.left = highlightRect.left + 'px';
+        this.currentHighlight.style.top = highlightRect.top + 'px';
+        this.currentHighlight.style.width = highlightRect.width + 'px';
+        this.currentHighlight.style.height = highlightRect.height + 'px';
+        
+        // 정보 툴팁 생성
+        this.currentInfo = document.createElement('div');
+        this.currentInfo.className = 'element-info';
+        
+        const elementInfo = this.getElementInfo(element);
+        this.currentInfo.innerHTML = `
+            <strong>${element.tagName.toLowerCase()}</strong><br>
+            ${elementInfo.classes ? `클래스: ${elementInfo.classes}<br>` : ''}
+            ${elementInfo.id ? `ID: ${elementInfo.id}<br>` : ''}
+            크기: ${rect.width}×${rect.height}px
+        `;
+        
+        // 툴팁 위치 계산
+        const tooltipX = Math.min(highlightRect.left, window.innerWidth - 220);
+        const tooltipY = highlightRect.top - 60;
+        
+        this.currentInfo.style.left = tooltipX + 'px';
+        this.currentInfo.style.top = tooltipY + 'px';
+        
+        // DOM에 추가
+        document.body.appendChild(this.currentHighlight);
+        document.body.appendChild(this.currentInfo);
+    }
+    
+    // 하이라이트 제거
+    clearHighlight() {
+        if (this.currentHighlight) {
+            this.currentHighlight.remove();
+            this.currentHighlight = null;
+        }
+        if (this.currentInfo) {
+            this.currentInfo.remove();
+            this.currentInfo = null;
+        }
+    }
+    
+    // 요소 정보 추출
+    getElementInfo(element) {
+        const info = {
+            tagName: element.tagName.toLowerCase(),
+            classes: element.className ? element.className.split(' ').filter(c => c.trim()).join(', ') : null,
+            id: element.id || null,
+            text: element.textContent ? element.textContent.trim().substring(0, 50) + (element.textContent.length > 50 ? '...' : '') : null
+        };
+        
+        return info;
+    }
+    
+    // 하이라이트 모드 전환
+    toggleHighlightMode(mode) {
+        this.highlightMode = mode;
+        
+        // 버튼 상태 업데이트
+        document.querySelectorAll('.html-preview-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // iframe이 로드된 상태라면 이벤트 리스너 재설정
+        if (this.isInitialized) {
+            this.setupElementHighlighting();
+        }
+        
+        this.updateStatus('ready', `${mode === 'hover' ? '호버' : '클릭'} 모드로 변경됨`);
+    }
+    
+    // 상태 업데이트
+    updateStatus(type, message) {
+        const indicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        
+        indicator.className = `status-indicator ${type}`;
+        statusText.textContent = message;
+    }
+
+    // 현재 커널의 shared_dict에서 HTML 가져와서 뷰어에 표시
+    async loadHTMLFromSharedDict(key = 'html') {
+        if (!this.currentKernelId) {
+            alert('커널이 없습니다. 먼저 커널을 생성해주세요.');
+            return false;
+        }
+        
+        try {
+            const sharedDict = await this.getSharedDict();
+            if (sharedDict && sharedDict[key]) {
+                this.setHTML(sharedDict[key]);
+                this.updateStatus('ready', `shared_dict['${key}']에서 HTML 로드 완료`);
+                return true;
+            } else {
+                alert(`shared_dict['${key}']에 HTML 데이터가 없습니다.`);
+                return false;
+            }
+        } catch (error) {
+            console.error('shared_dict에서 HTML 로드 실패:', error);
+            alert('shared_dict에서 HTML 로드 실패: ' + error.message);
+            return false;
+        }
+    }
+}
+
+// HTML 뷰어 인스턴스 즉시 생성
+const htmlViewerInstance = new HTMLViewer();
+
+// 전역 함수들 (HTML에서 직접 호출)
+function refreshView() {
+    htmlViewerInstance.refreshView();
+}
+
+function clearView() {
+    htmlViewerInstance.clearView();
+}
+
+function toggleHighlightMode(mode) {
+    htmlViewerInstance.toggleHighlightMode(mode);
+}
+
+// 외부에서 HTML 설정하는 함수
+function setHTMLContent(htmlContent) {
+    htmlViewerInstance.setHTML(htmlContent);
+}
+
+// 커널 ID 설정 함수 (외부에서 호출)
+function setKernelId(kernelId) {
+    console.log('HTML 뷰어 setKernelId 호출됨:', kernelId);
+    htmlViewerInstance.setKernelId(kernelId);
+}
+
+// 커널 ID 가져오기 함수 (외부에서 호출)
+function getKernelId() {
+    return htmlViewerInstance.getKernelId();
+}
+
+
+// 네이버 HTML 로드 함수 - 파일에서 불러와서 shared_dict에 저장
+async function loadNaverHTML() {
+    console.log('네이버 HTML 저장 버튼 클릭됨');
+    try {
+        // 파일에서 HTML 불러오기
+        const response = await fetch('/templates/component/html_viewer/naver.html');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const naverHTML = await response.text();
+        console.log('네이버 HTML 파일 로드됨, 길이:', naverHTML.length);
+        
+        // shared_dict에 저장
+        console.log('shared_dict에 저장 시작...');
+        const success = await htmlViewerInstance.setSharedDictValue('naver', naverHTML);
+        
+        if (success) {
+            console.log('shared_dict에 네이버 HTML 저장 성공');
+            htmlViewerInstance.updateStatus('ready', '네이버 HTML이 파일에서 불러와져 shared_dict에 저장되었습니다.');
+            
+            // 저장된 HTML을 화면에 표시
+            console.log('저장된 HTML을 화면에 표시 시작');
+            htmlViewerInstance.setHTML(naverHTML);
+            console.log('HTML 화면 표시 완료');
+        } else {
+            console.log('shared_dict에 네이버 HTML 저장 실패');
+        }
+    } catch (error) {
+        console.error('네이버 HTML 파일 로드 실패:', error);
+        alert('네이버 HTML 파일 로드 실패: ' + error.message);
+    }
+}
+
+// shared_dict에서 HTML 로드하는 전역 함수
+async function loadHTMLFromSharedDict(key = 'html') {
+    return await htmlViewerInstance.loadHTMLFromSharedDict(key);
+}
+
+// 창 크기 변경 시 하이라이트 위치 재조정
+window.addEventListener('resize', function() {
+    if (htmlViewerInstance && htmlViewerInstance.currentHighlight) {
+        // 현재 하이라이트된 요소가 있다면 위치 재조정
+        const iframeDoc = htmlViewerInstance.iframe.contentDocument || htmlViewerInstance.iframe.contentWindow.document;
+        const activeElement = iframeDoc.querySelector(':hover');
+        if (activeElement) {
+            htmlViewerInstance.highlightElement(activeElement, {});
+        }
+    }
+}); 

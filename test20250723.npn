@@ -1,0 +1,67 @@
+{
+  "cells": [
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_1"
+      },
+      "source": "{\n  \"job_type\": \"request\",\n  \"action\": \"get\",\n  \"params\": {\n    \"url\": \"https://ecos.bok.or.kr/api/StatisticSearch/WAQ1II5RQ28B4CTUVXTU/json/kr/1/10/721Y001/M/202501/202507/2010000\"\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T07:53:53.312Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'request', 'action': 'get', 'params': {'url': 'https://ecos.bok.or.kr/api/StatisticSearch/WAQ1II5RQ28B4CTUVXTU/json/kr/1/10/721Y001/M/202501/202507/2010000', 'params': ''}}\n🔍 Converted args: {'type': 'request', 'action': 'get', 'url': 'https://ecos.bok.or.kr/api/StatisticSearch/WAQ1II5RQ28B4CTUVXTU/json/kr/1/10/721Y001/M/202501/202507/2010000', 'params': '', 'request_type': 'get'}\nSYSTEM_REQUEST에 데이터가 저장되었습니다:\n  - HTML 길이: 1718\n  - CSS 파일 개수: 0\n  - URL: https://ecos.bok.or.kr/api/StatisticSearch/WAQ1II5RQ28B4CTUVXTU/json/kr/1/10/721Y001/M/202501/202507/2010000\nJob 'Crawl_1' 실행 결과: {'result': True, 'message': 'HTML과 CSS가 SYSTEM_REQUEST에 저장되었습니다', 'data': <Response [200]>}\nJob 결과가 shared_dict['Crawl_1']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['Crawl_1']['data'])",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T07:54:02.021Z",
+          "output": "<Response [200]>\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['Crawl_1']['data'].json())",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T07:54:11.263Z",
+          "output": "{'StatisticSearch': {'list_total_count': 6, 'row': [{'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202501', 'DATA_VALUE': '3.04'}, {'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202502', 'DATA_VALUE': '2.95'}, {'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202503', 'DATA_VALUE': '2.84'}, {'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202504', 'DATA_VALUE': '2.74'}, {'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202505', 'DATA_VALUE': '2.67'}, {'STAT_CODE': '721Y001', 'STAT_NAME': '1.3.2.2. 시장금리(월,분기,년)', 'ITEM_CODE1': '2010000', 'ITEM_NAME1': 'CD(91일)', 'ITEM_CODE2': None, 'ITEM_NAME2': None, 'ITEM_CODE3': None, 'ITEM_NAME3': None, 'ITEM_CODE4': None, 'ITEM_NAME4': None, 'UNIT_NAME': '연%', 'WGT': None, 'TIME': '202506', 'DATA_VALUE': '2.57'}]}}\n",
+          "execution_count": 1
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.0"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 4
+}

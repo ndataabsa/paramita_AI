@@ -1,0 +1,24 @@
+<!-- 파일 읽기 전용 컴포넌트 (최소화) -->
+<script>
+// 파일 내용만 읽어서 콜백으로 전달하는 함수
+function readFileOnly(filePath, callback) {
+    
+    fetch(`/api/files/content?path=${encodeURIComponent(filePath)}`)
+        .then(response => {
+            
+            return response.json();
+        })
+        .then(data => {
+            
+            if (data.success) {
+                callback && callback(data.content);
+            } else {
+                alert('파일 읽기 실패: ' + (data.message || ''));
+            }
+        })
+        .catch(error => {
+            console.error('[readFileOnly] fetch 에러:', error);
+        });
+}
+</script>
+<link rel="stylesheet" href="file_reader.css"> 

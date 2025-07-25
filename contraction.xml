@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 웹 크롤링 작업 설정 파일 -->
+<worker>
+    <!-- 크롤러 기본 설정 -->
+    <name>crawl_test</name>
+    <url>https://www.google.com</url>
+    <type>selenium</type>
+    <default_sleep>0.1</default_sleep>
+    <default_interval>0.1</default_interval>
+    
+    <!-- 실행할 작업 목록 -->
+    <jobs>
+        <!-- 제목 가져오기 작업 -->
+        <job>
+            <name>get_title</name>
+            <type>do</type>
+            <params>
+                <action>get_text</action>
+                <focus>
+                    <selector>h1</selector>
+                </focus>
+            </params>
+        </job>
+        
+        <!-- 로그인 버튼 클릭 작업 -->
+        <job>
+            <name>click_login_button</name>
+            <type>do</type>
+            <params>
+                
+                <focus>
+                    <xpath>//*[@id='login-button']</xpath>
+                </focus>
+                <action>click</action>
+                <speed>0.5</speed>
+            </params>
+        </job>
+    </jobs>
+</worker> 
+
+<!-- focus 타입
+    current
+    포커스 타입 설정 current는 현재 포커스 요소
+
+    <xpath>//*[@id='login-button']</xpath>
+    xpath 선택자   
+    
+    <selector>h1</selector>
+    css 선택자
+-->

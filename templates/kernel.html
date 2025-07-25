@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 커널 - 실시간 코드 실행</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .kernel-controls {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .kernel-info {
+            background: #e9ecef;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .kernel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .kernel-panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 1rem;
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 1rem;
+            resize: vertical;
+            background: #f8f9fa;
+        }
+
+        .output-area {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 1rem;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .output-item {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 3px;
+        }
+
+        .output-stdout {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .output-stderr {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .output-error {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .execution-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .namespace-panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .namespace-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .namespace-item:last-child {
+            border-bottom: none;
+        }
+
+        .namespace-key {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .namespace-value {
+            font-family: monospace;
+            color: #6c757d;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .history-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .history-item:hover {
+            background: #f8f9fa;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-code {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 3px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .history-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-idle {
+            background: #28a745;
+        }
+
+        .status-busy {
+            background: #ffc107;
+        }
+
+        .status-error {
+            background: #dc3545;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-links {
+            margin-top: 1rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-right: 1rem;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .kernel-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐍 Python 커널 - 실시간 코드 실행</h1>
+        <p>주피터 노트북과 유사한 환경에서 Python 코드를 실시간으로 실행해보세요</p>
+        <div class="nav-links">
+            <a href="/">🏠 홈</a>
+            <a href="/jobs">📋 Jobs</a>
+            <a href="/worker">⚙️ Worker</a>
+            <a href="/notebook">📓 Paramita AI</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 커널 컨트롤 -->
+        <div class="kernel-controls">
+            <div class="control-group">
+                <label>현재 세션 커널:</label>
+                <div class="kernel-info" id="currentKernel">로딩 중...</div>
+                <button class="btn btn-warning" onclick="clearSessionKernel()">세션 커널 초기화</button>
+                <button class="btn btn-danger" onclick="terminateSessionKernel()">세션 커널 종료</button>
+                <button class="btn btn-secondary" onclick="refreshSessionKernel()">커널 정보 새로고침</button>
+            </div>
+            <div class="control-group">
+                <label>커널 상태:</label>
+                <div class="kernel-info" id="kernelStatus">-</div>
+                <button class="btn btn-info" onclick="showSessionNamespace()">변수 보기</button>
+            </div>
+        </div>
+
+        <!-- 메인 그리드 -->
+        <div class="kernel-grid">
+            <!-- 코드 실행 패널 -->
+            <div class="kernel-panel">
+                <div class="panel-header">
+                    <span>📝 코드 실행</span>
+                    <button class="btn btn-success" onclick="executeCode()">실행 (Ctrl+Enter)</button>
+                </div>
+                <div class="panel-content">
+                    <textarea id="codeEditor" class="code-editor" placeholder="Python 코드를 입력하세요...&#10;&#10;예시:&#10;print('Hello, World!')&#10;x = 10&#10;y = 20&#10;print(f'x + y = {x + y}')"></textarea>
+                    <div class="loading" id="executionLoading">
+                        <div class="spinner"></div>
+                        <div>코드 실행 중...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 출력 패널 -->
+            <div class="kernel-panel">
+                <div class="panel-header">
+                    <span>📤 실행 결과</span>
+                    <button class="btn btn-secondary" onclick="clearOutput()">출력 지우기</button>
+                </div>
+                <div class="panel-content">
+                    <div id="outputArea" class="output-area">실행 결과가 여기에 표시됩니다...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 패널들 -->
+        <div class="kernel-grid">
+            <!-- 네임스페이스 패널 -->
+            <div class="namespace-panel">
+                <div class="panel-header">
+                    <span>📦 네임스페이스</span>
+                    <button class="btn btn-secondary" onclick="refreshNamespace()">새로고침</button>
+                </div>
+                <div class="panel-content">
+                    <div id="namespaceArea">
+                        <div class="loading" id="namespaceLoading">
+                            <div class="spinner"></div>
+                            <div>네임스페이스 로딩 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실행 기록 패널 -->
+            <div class="history-panel">
+                <div class="panel-header">
+                    <span>📚 실행 기록</span>
+                    <button class="btn btn-secondary" onclick="refreshHistory()">새로고침</button>
+                </div>
+                <div class="panel-content">
+                    <div id="historyArea">
+                        <div class="loading" id="historyLoading">
+                            <div class="spinner"></div>
+                            <div>실행 기록 로딩 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentKernelId = null;
+        let executionCount = 0;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshSessionKernel();
+            setupKeyboardShortcuts();
+        });
+
+        // 키보드 단축키 설정
+        function setupKeyboardShortcuts() {
+            document.getElementById('codeEditor').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    executeCode();
+                }
+            });
+        }
+
+        // 세션 커널 정보 새로고침
+        async function refreshSessionKernel() {
+            try {
+                const response = await fetch('/api/session/kernel/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentKernelId = data.status.kernel_id;
+                    updateKernelInfo();
+                    refreshNamespace();
+                    refreshHistory();
+                } else {
+                    showOutput('error', '세션 커널 정보를 가져오는데 실패했습니다: ' + data.error);
+                }
+            } catch (error) {
+                console.error('세션 커널 정보 새로고침 실패:', error);
+                showOutput('error', '세션 커널 정보를 가져오는데 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 세션 커널 초기화
+        async function clearSessionKernel() {
+            if (!confirm('세션 커널의 모든 변수를 초기화하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/session/kernel/clear', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showOutput('stdout', '세션 커널이 초기화되었습니다');
+                    refreshSessionKernel();
+                } else {
+                    showOutput('error', '커널 초기화 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('커널 초기화 실패:', error);
+                showOutput('error', '커널 초기화에 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 세션 커널 종료
+        async function terminateSessionKernel() {
+            if (!confirm('세션 커널을 완전히 종료하시겠습니까? 모든 변수와 실행 기록이 삭제됩니다.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/session/kernel/cleanup', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showOutput('stdout', '세션 커널이 종료되었습니다');
+                    currentKernelId = null;
+                    document.getElementById('currentKernel').textContent = '커널이 종료됨';
+                    document.getElementById('kernelStatus').textContent = '-';
+                    document.getElementById('namespaceArea').innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">커널이 종료되었습니다</div>';
+                    document.getElementById('historyArea').innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">커널이 종료되었습니다</div>';
+                    updateKernelInfo();
+                } else {
+                    showOutput('error', '커널 종료 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('커널 종료 실패:', error);
+                showOutput('error', '커널 종료에 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 세션 네임스페이스 보기
+        async function showSessionNamespace() {
+            try {
+                const response = await fetch('/api/session/kernel/namespace');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const namespace = data.namespace;
+                    let message = '현재 세션 변수:\n';
+                    
+                    if (Object.keys(namespace).length === 0) {
+                        message += '변수가 없습니다.';
+                    } else {
+                        for (const [key, value] of Object.entries(namespace)) {
+                            const valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                            message += `${key}: ${valueStr}\n`;
+                        }
+                    }
+                    
+                    showOutput('stdout', message);
+                } else {
+                    showOutput('error', '변수 정보 로드 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('변수 정보 로드 실패:', error);
+                showOutput('error', '변수 정보를 가져오는데 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 커널 정보 업데이트
+        async function updateKernelInfo() {
+            if (!currentKernelId) {
+                document.getElementById('currentKernel').textContent = '커널이 선택되지 않음';
+                document.getElementById('kernelStatus').textContent = '-';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/session/kernel/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const status = data.status;
+                    document.getElementById('currentKernel').textContent = currentKernelId;
+                    
+                    const statusElement = document.getElementById('kernelStatus');
+                    statusElement.innerHTML = `
+                        <span class="status-indicator status-${status.status}"></span>
+                        ${status.status} (실행 횟수: ${status.execution_count})
+                    `;
+                }
+            } catch (error) {
+                console.error('커널 상태 업데이트 실패:', error);
+            }
+        }
+
+        // 코드 실행
+        async function executeCode() {
+            const code = document.getElementById('codeEditor').value.trim();
+            if (!code) {
+                showOutput('error', '실행할 코드가 없습니다');
+                return;
+            }
+
+            // 로딩 표시
+            document.getElementById('executionLoading').classList.add('show');
+            
+            try {
+                const response = await fetch('/api/session/kernel/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        timeout: 30.0
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const result = data.result;
+                    executionCount = result.execution_count;
+                    
+                    // 실행 정보 표시
+                    const executionInfo = `[${executionCount}] 실행 시간: ${result.execution_time.toFixed(3)}초`;
+                    
+                    if (result.success) {
+                        if (result.stdout) {
+                            showOutput('stdout', result.stdout);
+                        }
+                        if (result.stderr) {
+                            showOutput('stderr', result.stderr);
+                        }
+                        if (!result.stdout && !result.stderr) {
+                            showOutput('stdout', '코드가 성공적으로 실행되었습니다.');
+                        }
+                        showOutput('stdout', executionInfo);
+                    } else {
+                        showOutput('error', result.error);
+                        if (result.traceback) {
+                            showOutput('stderr', result.traceback);
+                        }
+                        showOutput('stdout', executionInfo);
+                    }
+                    
+                    // 커널 정보 업데이트
+                    updateKernelInfo();
+                    refreshNamespace();
+                    refreshHistory();
+                } else {
+                    showOutput('error', '코드 실행 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('코드 실행 실패:', error);
+                showOutput('error', '코드 실행에 실패했습니다: ' + error.message);
+            } finally {
+                // 로딩 숨김
+                document.getElementById('executionLoading').classList.remove('show');
+            }
+        }
+
+        // 네임스페이스 새로고침
+        async function refreshNamespace() {
+            document.getElementById('namespaceLoading').classList.add('show');
+            
+            try {
+                const response = await fetch('/api/session/kernel/namespace');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const namespace = data.namespace;
+                    const namespaceArea = document.getElementById('namespaceArea');
+                    
+                    if (Object.keys(namespace).length === 0) {
+                        namespaceArea.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">네임스페이스가 비어있습니다</div>';
+                    } else {
+                        let html = '';
+                        for (const [key, value] of Object.entries(namespace)) {
+                            const valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                            html += `
+                                <div class="namespace-item">
+                                    <span class="namespace-key">${key}</span>
+                                    <span class="namespace-value" title="${valueStr}">${valueStr}</span>
+                                </div>
+                            `;
+                        }
+                        namespaceArea.innerHTML = html;
+                    }
+                } else {
+                    showOutput('error', '네임스페이스 로드 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('네임스페이스 새로고침 실패:', error);
+                showOutput('error', '네임스페이스를 가져오는데 실패했습니다: ' + error.message);
+            } finally {
+                document.getElementById('namespaceLoading').classList.remove('show');
+            }
+        }
+
+        // 실행 기록 새로고침
+        async function refreshHistory() {
+            document.getElementById('historyLoading').classList.add('show');
+            
+            try {
+                const response = await fetch('/api/session/kernel/history?limit=10');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const history = data.history;
+                    const historyArea = document.getElementById('historyArea');
+                    
+                    if (history.length === 0) {
+                        historyArea.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">실행 기록이 없습니다</div>';
+                    } else {
+                        let html = '';
+                        for (const item of history.reverse()) {
+                            const timestamp = new Date(item.timestamp).toLocaleString();
+                            const successIcon = item.success ? '✅' : '❌';
+                            html += `
+                                <div class="history-item" onclick="loadHistoryCode('${item.execution_id}')">
+                                    <div class="history-code">${item.code}</div>
+                                    <div class="history-meta">
+                                        ${successIcon} [${item.execution_id}] ${timestamp} (${item.execution_time.toFixed(3)}초)
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        historyArea.innerHTML = html;
+                    }
+                } else {
+                    showOutput('error', '실행 기록 로드 실패: ' + data.error);
+                }
+            } catch (error) {
+                console.error('실행 기록 새로고침 실패:', error);
+                showOutput('error', '실행 기록을 가져오는데 실패했습니다: ' + error.message);
+            } finally {
+                document.getElementById('historyLoading').classList.remove('show');
+            }
+        }
+
+        // 네임스페이스 초기화 (사용하지 않음 - 세션 커널 초기화로 대체)
+        async function clearNamespace() {
+            showOutput('error', '이 기능은 사용되지 않습니다. 세션 커널 초기화를 사용하세요.');
+        }
+
+        // 출력 표시
+        function showOutput(type, content) {
+            const outputArea = document.getElementById('outputArea');
+            const outputItem = document.createElement('div');
+            outputItem.className = `output-item output-${type}`;
+            outputItem.textContent = content;
+            outputArea.appendChild(outputItem);
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        // 출력 지우기
+        function clearOutput() {
+            document.getElementById('outputArea').innerHTML = '실행 결과가 여기에 표시됩니다...';
+        }
+
+        // 네임스페이스 지우기
+        function clearNamespace() {
+            document.getElementById('namespaceArea').innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">네임스페이스가 비어있습니다</div>';
+        }
+
+        // 실행 기록 지우기
+        function clearHistory() {
+            document.getElementById('historyArea').innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">실행 기록이 없습니다</div>';
+        }
+
+        // 실행 기록에서 코드 로드
+        function loadHistoryCode(executionId) {
+            // TODO: 특정 실행 기록의 코드를 에디터에 로드하는 기능 구현
+            showOutput('stdout', `실행 기록 ${executionId}의 코드를 로드하는 기능은 아직 구현되지 않았습니다.`);
+        }
+
+        // 주기적으로 커널 상태 업데이트
+        setInterval(updateKernelInfo, 5000);
+    </script>
+</body>
+</html> 

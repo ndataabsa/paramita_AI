@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #fff; }
+        
+        .header { padding: 20px; text-align: right; }
+        .header a { color: #000; text-decoration: none; margin-left: 15px; font-size: 13px; }
+        .header a:hover { text-decoration: underline; }
+        
+        .main { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; }
+        .logo { font-size: 90px; color: #4285f4; margin-bottom: 30px; font-weight: bold; }
+        .search_box { display: flex; max-width: 580px; width: 100%; border: 1px solid #dfe1e5; border-radius: 24px; padding: 8px; }
+        .search_box:hover { box-shadow: 0 1px 6px rgba(32,33,36,.28); }
+        .search_input { flex: 1; border: none; outline: none; font-size: 16px; padding: 0 15px; }
+        .search_button { background: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 4px; color: #3c4043; font-size: 14px; margin: 11px 4px; padding: 0 16px; height: 36px; cursor: pointer; }
+        .search_button:hover { box-shadow: 0 1px 1px rgba(0,0,0,.1); background-color: #f8f9fa; border: 1px solid #dadce0; color: #202124; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; background: #f2f2f2; padding: 15px; }
+        .footer_content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; font-size: 14px; color: #70757a; }
+        .footer a { color: #70757a; text-decoration: none; margin: 0 10px; }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="#">Gmail</a>
+        <a href="#">이미지</a>
+        <a href="#">Google 앱</a>
+        <a href="#">로그인</a>
+    </header>
+    
+    <main class="main">
+        <div class="logo">Google</div>
+        <div class="search_box">
+            <input type="text" class="search_input" placeholder="Google 검색 또는 URL 입력">
+        </div>
+        <div style="margin-top: 20px;">
+            <button class="search_button">Google 검색</button>
+            <button class="search_button">I'm Feeling Lucky</button>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="footer_content">
+            <div>
+                <a href="#">광고</a>
+                <a href="#">비즈니스</a>
+                <a href="#">검색의 원리</a>
+                <a href="#">개인정보처리방침</a>
+            </div>
+            <div>
+                <a href="#">도움말</a>
+                <a href="#">의견 보내기</a>
+                <a href="#">개인정보</a>
+                <a href="#">약관</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

@@ -1,0 +1,500 @@
+/* Jobs 관리 페이지 스타일 */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 헤더 스타일 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.header h1 {
+    margin: 0;
+    color: #1976d2;
+}
+
+.nav-links {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-link {
+    padding: 8px 16px;
+    background-color: #2196f3;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.nav-link:hover {
+    background-color: #1976d2;
+}
+
+.nav-link.home {
+    background-color: #4caf50;
+}
+
+.nav-link.home:hover {
+    background-color: #45a049;
+}
+
+/* 파일 선택기 스타일 */
+.file-selector {
+    background-color: #fff3e0;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #ffb74d;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-selector h2 {
+    margin: 0;
+    color: #f57c00;
+    font-size: 16px;
+    min-width: 120px;
+}
+
+.file-selector select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.file-selector button {
+    padding: 6px 12px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.file-selector button:hover {
+    background-color: #1976d2;
+}
+
+.current-file {
+    font-weight: bold;
+    color: #1976d2;
+    margin-left: auto;
+}
+
+/* Jobs 헤더 스타일 */
+.jobs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.jobs-header h2 {
+    margin: 0;
+    color: #1976d2;
+}
+
+.session-kernel-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.session-kernel-info span {
+    color: #666;
+}
+
+.session-kernel-info button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    color: white;
+}
+
+.session-kernel-info .btn-secondary {
+    background-color: #6c757d;
+}
+
+.session-kernel-info .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.session-kernel-info .btn-info {
+    background-color: #17a2b8;
+}
+
+.session-kernel-info .btn-info:hover {
+    background-color: #138496;
+}
+
+.session-kernel-info .btn-primary {
+    background-color: #007bff;
+}
+
+.session-kernel-info .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.session-kernel-info .btn-danger {
+    background-color: #dc3545;
+}
+
+.session-kernel-info .btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* 테이블 스타일 */
+.jobs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    display: table;
+}
+
+.jobs-table th {
+    background-color: #2196f3;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #1976d2;
+}
+
+.jobs-table th:nth-child(1) { width: 7%; }   /* 순서 */
+.jobs-table th:nth-child(2) { width: 20%; }  /* Job Name */
+.jobs-table th:nth-child(3) { width: 10%; }  /* Type */
+.jobs-table th:nth-child(4) { width: 15%; }  /* Action/Find Type */
+.jobs-table th:nth-child(5) { width: 35%; }  /* Parameters */
+.jobs-table th:nth-child(6) { width: 7%; }   /* 실행 */
+.jobs-table th:nth-child(7) { width: 7%; }   /* 삭제 */
+
+.jobs-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.jobs-table td:nth-child(1) { 
+    width: 7%; 
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+}
+.jobs-table td:nth-child(2) { width: 20%; }
+.jobs-table td:nth-child(3) { width: 10%; }
+.jobs-table td:nth-child(4) { width: 15%; }
+.jobs-table td:nth-child(5) { width: 35%; }
+.jobs-table td:nth-child(6) { width: 7%; }
+.jobs-table td:nth-child(7) { width: 7%; }
+
+.jobs-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.jobs-table tr:hover {
+    background-color: #e3f2fd;
+}
+
+/* Job Name 스타일 */
+.job-name {
+    font-weight: bold;
+    color: #1976d2;
+    text-align: center;
+}
+
+.job-name input {
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Type Select 스타일 */
+.job-type select {
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 12px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Action Select 스타일 */
+.action-select {
+    width: 100%;
+    height: 100%;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Parameters Editor 스타일 */
+.params-editor {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.param-row {
+    display: flex;
+    align-items: center;
+    padding-bottom: 8px;
+    gap: 10px;
+}
+
+.param-key {
+    font-weight: bold;
+    min-width: 120px;
+    font-size: 12px;
+}
+
+.param-value {
+    flex: 1;
+}
+
+.param-value input, .param-value select, .param-value textarea {
+    width: calc(100% - 10px);
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.param-value textarea {
+    font-family: 'Courier New', monospace;
+    resize: vertical;
+    min-height: 80px;
+    cursor: text !important;
+    pointer-events: auto !important;
+    z-index: 10 !important;
+    position: relative;
+    background-color: white;
+    border: 2px solid #007bff;
+}
+
+.param-value textarea:focus {
+    outline: none;
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.params-json {
+    background-color: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* No Jobs 메시지 */
+.no-jobs {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+}
+
+/* 메시지 스타일 */
+.message {
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    display: none;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 실행 버튼 */
+.run-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    margin-right: 5px;
+}
+
+.run-btn:hover {
+    background-color: #218838;
+}
+
+.run-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.delete-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* Floating Action Button */
+.floating-add-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-add-btn:hover {
+    background-color: #f57c00;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+.floating-add-btn:active {
+    transform: scale(0.95);
+}
+
+/* Floating Save Button */
+.floating-save-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 100px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.floating-save-btn:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+.floating-save-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+
+
+/* 실행 결과 표시 */
+.job-result {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 10px;
+    margin: 5px 0;
+    font-family: monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.job-result.success {
+    border-left-color: #28a745;
+    background-color: #d4edda;
+}
+
+.job-result.error {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.job-result.running {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+/* job 행 드래그 스타일 */
+.job-row {
+    cursor: move;
+    transition: background-color 0.2s;
+}
+
+.job-row:hover {
+    background-color: #f0f8ff;
+}
+
+.job-row.dragging {
+    opacity: 0.5;
+    background-color: #f8f9fa;
+    transform: rotate(2deg);
+    z-index: 1000;
+    position: relative;
+}
+
+.job-row.drag-over {
+    border-top: 3px solid #007bff;
+} 

@@ -1,0 +1,3 @@
+[DEFAULT]
+root_dir = /home/PROJECT/PROJECT_CRAWLER
+users = ndata-ohseong,testuser,ndata-jobyeongjun,ndata-yunjiwon

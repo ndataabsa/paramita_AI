@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramita AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+        }
+
+        .notebook-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .cell {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .cell-header {
+            background: #f8f9fa;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cell-title {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .cell-type {
+            background: #667eea;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .cell-content {
+            padding: 1.5rem;
+        }
+
+        .cell-description {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .cell-actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .file-selector {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .file-selector h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .file-selector select {
+            padding: 0.6rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .file-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .current-file {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .notebook-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .notebook-info h2 {
+            color: #1976d2;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .info-icon {
+            font-size: 1.2rem;
+            color: #1976d2;
+        }
+
+        .main-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .action-card h3 {
+            color: #2c3e50;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+
+        .action-card p {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .notebook-container {
+                padding: 1rem;
+            }
+            
+            .cell-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+
+            .main-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📓 Paramita AI</h1>
+    </div>
+
+    <div class="notebook-container">
+        <!-- 파일 선택기 -->
+        <div class="file-selector">
+            <h2>📁 프로젝트 파일 선택</h2>
+            <form method="GET" action="/">
+                <select name="file" onchange="this.form.submit()">
+                    {% for file in json_files %}
+                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>
+                        {{ file }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <div class="current-file">
+                현재 선택된 파일: <strong>{{ selected_file }}</strong>
+            </div>
+        </div>
+
+        <!-- 메인 액션 버튼들 -->
+        <div class="main-actions">
+            <div class="action-card">
+                <h3>⚙️ Worker 설정</h3>
+                <p>Worker의 기본 설정을 관리하고 구성합니다.</p>
+                <a href="/worker?file={{ selected_file }}" class="btn btn-primary">
+                    Worker 설정 열기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>📋 Jobs 관리</h3>
+                <p>작업 목록을 관리하고 실행 순서를 조정합니다.</p>
+                <a href="/jobs?file={{ selected_file }}" class="btn btn-success">
+                    Jobs 관리 열기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>📓 Paramita AI</h3>
+                <p>파일 브라우저와 노트북이 통합된 환경입니다.</p>
+                <a href="/notebook?file={{ selected_file }}" class="btn btn-info">
+                                            Paramita AI 열기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>🐍 Python 커널</h3>
+                <p>Python 코드를 실시간으로 실행하고 테스트합니다.</p>
+                <a href="/kernel" class="btn btn-warning">
+                    Python 커널 열기
+                </a>
+            </div>
+        </div>
+
+        <!-- 노트북 정보 -->
+        <div class="notebook-info">
+            <h2>🚀 Paramita AI 환경</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-icon">📁</span>
+                    <span>파일 관리</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🐍</span>
+                    <span>Python 실행</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">⚙️</span>
+                    <span>작업 관리</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">📊</span>
+                    <span>데이터 분석</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,56 @@
+<!-- 채팅 히스토리 목록 컴포넌트 (좌측 패널용) -->
+<div class="chat-history-header">
+    <h3>💬 채팅 히스토리</h3>
+    <div class="chat-history-controls">
+        <button class="btn btn-primary" onclick="refreshChatHistory()">
+            <span class="icon">🔄</span>
+            <span class="label">새로고침</span>
+        </button>
+        <button class="btn btn-success" onclick="createNewChat()">
+            <span class="icon">➕</span>
+            <span class="label">새 채팅</span>
+        </button>
+    </div>
+    <input type="text" class="search-box" placeholder="채팅 검색..." onkeyup="filterChats(this.value)">
+</div>
+
+<div class="chat-history-list" id="chatHistoryList">
+    <div class="loading" id="chatHistoryLoading">
+        <div class="spinner"></div>
+        채팅 목록을 불러오는 중...
+    </div>
+    
+    <!-- 샘플 채팅 목록 -->
+    <div class="chat-item active" onclick="selectChat('chat-001')">
+        <div class="chat-info">
+            <div class="chat-title">AI 코딩 도움</div>
+            <div class="chat-preview">파이썬 코드 리팩토링에 대해 문의드립니다...</div>
+        </div>
+        <div class="chat-meta">
+            <div class="chat-time">오후 2:30</div>
+            <div class="chat-count">15</div>
+        </div>
+    </div>
+    
+    <div class="chat-item" onclick="selectChat('chat-002')">
+        <div class="chat-info">
+            <div class="chat-title">웹 스크래핑 질문</div>
+            <div class="chat-preview">Selenium을 사용한 동적 페이지 크롤링...</div>
+        </div>
+        <div class="chat-meta">
+            <div class="chat-time">오전 11:45</div>
+            <div class="chat-count">8</div>
+        </div>
+    </div>
+    
+    <div class="chat-item" onclick="selectChat('chat-003')">
+        <div class="chat-info">
+            <div class="chat-title">데이터베이스 최적화</div>
+            <div class="chat-preview">MySQL 쿼리 성능 개선 방법...</div>
+        </div>
+        <div class="chat-meta">
+            <div class="chat-time">어제</div>
+            <div class="chat-count">23</div>
+        </div>
+    </div>
+</div> 

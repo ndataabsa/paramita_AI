@@ -1,0 +1,116 @@
+{
+    "worker": {
+        "name": "crawl_test",
+        "url": "https://www.google.com",
+        "type": "selenium",
+        "default_sleep": 0.1,
+        "default_interval": 0.1,
+        "jobs": [
+            {
+                "name": "get_title",
+                "params": {
+                    "action": "get_text",
+                    "focus": {
+                        "selector": "h1"
+                    }
+                },
+                "type": "do"
+            },
+            {
+                "name": "click_login_button",
+                "params": {
+                    "action": "click",
+                    "focus": {
+                        "xpath": "//*[@id='login-button']"
+                    },
+                    "speed": 0.5
+                },
+                "type": "do"
+            },
+            {
+                "name": "input_search",
+                "params": {
+                    "action": "text",
+                    "focus": {
+                        "xpath": "//input[@name='q']"
+                    },
+                    "speed": 0.1,
+                    "text": "검색어"
+                },
+                "type": "do"
+            },
+            {
+                "name": "enter_search",
+                "params": {
+                    "action": "enter"
+                },
+                "type": "do"
+            },
+            {
+                "name": "clear_search",
+                "params": {
+                    "action": "clear",
+                    "focus": {
+                        "xpath": "//input[@name='q']"
+                    },
+                    "speed": 0.1
+                },
+                "type": "do"
+            },
+            {
+                "name": "scroll_page",
+                "params": {
+                    "action": "scroll",
+                    "max_time": 3,
+                    "sleep": 0.5,
+                    "speed_variation": 0.05
+                },
+                "type": "do"
+            },
+            {
+                "name": "scroll_to_content",
+                "params": {
+                    "action": "scroll_to_element",
+                    "focus": {
+                        "xpath": "//div[@id='content']"
+                    },
+                    "max_time": 100000,
+                    "sleep": 0.1,
+                    "speed": 300,
+                    "speed_variation": 0.05
+                },
+                "type": "do"
+            },
+            {
+                "name": "select_radio",
+                "params": {
+                    "action": "radio",
+                    "focus": {
+                        "xpath": "//input[@type='radio']"
+                    },
+                    "value": "male"
+                },
+                "type": "do"
+            },
+            {
+                "name": "check_box",
+                "params": {
+                    "action": "radio",
+                    "focus": {
+                        "xpath": "//input[@type='checkbox']"
+                    }
+                },
+                "type": "do"
+            },
+            {
+                "name": "test_python_code",
+                "params": {
+                    "python_type": "code",
+                    "code": "print('Hello from Python!'); x = 42; print(f'x = {x}'); result = x * 2; print('data_share_dict 키들:'); print(list(data_share_dict.keys())); print('data_share_dict 내용:'); print(data_share_dict)",
+                    "to": "python_result"
+                },
+                "type": "python"
+            }
+        ]
+    }
+}

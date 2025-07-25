@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker 설정</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1976d2;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            background-color: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .nav-link:hover {
+            background-color: #1976d2;
+        }
+        .nav-link.home {
+            background-color: #4caf50;
+        }
+        .nav-link.home:hover {
+            background-color: #45a049;
+        }
+        .file-selector {
+            background-color: #fff3e0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ffb74d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-selector h2 {
+            margin: 0;
+            color: #f57c00;
+            font-size: 16px;
+            min-width: 120px;
+        }
+        .file-selector select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .file-selector button {
+            padding: 6px 12px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .file-selector button:hover {
+            background-color: #1976d2;
+        }
+        .current-file {
+            font-weight: bold;
+            color: #1976d2;
+            margin-left: auto;
+        }
+        .worker-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .worker-info h2 {
+            margin-top: 0;
+            color: #1976d2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .worker-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .worker-info td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .worker-info td:first-child {
+            font-weight: bold;
+            width: 150px;
+        }
+        .worker-info input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .worker-info input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+        .save-btn {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+        .save-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .new-worker-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .new-worker-btn:hover {
+            background-color: #f57c00;
+        }
+        .delete-worker-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .delete-worker-btn:hover {
+            background-color: #d32f2f;
+        }
+        .new-worker-form {
+            background-color: #fff3e0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #ffb74d;
+        }
+        .new-worker-form h2 {
+            margin-top: 0;
+            color: #f57c00;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #f57c00;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff9800;
+        }
+        .status-message {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .status-message.available {
+            color: #4caf50;
+        }
+        .status-message.exists {
+            color: #f44336;
+        }
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .create-btn {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .create-btn:hover {
+            background-color: #45a049;
+        }
+        .create-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .cancel-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>Worker 설정</h1>
+            <div class="nav-links">
+                <a href="/?file={{ selected_file }}" class="nav-link home">홈</a>
+                <a href="/jobs?file={{ selected_file }}" class="nav-link">Jobs 관리</a>
+                <a href="/notebook?file={{ selected_file }}" class="nav-link">Paramita AI</a>
+            </div>
+        </div>
+        
+        <!-- 파일 선택기 -->
+        <div class="file-selector">
+            <h2>Worker 파일:</h2>
+            <form method="GET" action="/worker" style="display: flex; align-items: center; gap: 10px;">
+                <select name="file" onchange="this.form.submit()">
+                    {% for file in json_files %}
+                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>
+                        {{ file }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">로드</button>
+            </form>
+            <button class="new-worker-btn" onclick="showNewWorkerForm()">새 Worker 만들기</button>
+            <button class="delete-worker-btn" onclick="deleteWorker()">Worker 삭제</button>
+            <div class="current-file">{{ selected_file }}</div>
+        </div>
+        
+        <!-- 메시지 표시 영역 -->
+        <div id="message" class="message"></div>
+        
+        <!-- 새 Worker 만들기 폼 -->
+        <div id="new-worker-form" class="new-worker-form" style="display: none;">
+            <h2>새 Worker 만들기</h2>
+            <div class="form-group">
+                <label for="new_filename">파일명:</label>
+                <input type="text" id="new_filename" placeholder="worker_config.json" onblur="checkFilename()">
+                <span id="filename-status" class="status-message"></span>
+            </div>
+            <div class="form-group">
+                <label for="new_worker_name">Worker 이름:</label>
+                <input type="text" id="new_worker_name" placeholder="새로운 Worker">
+            </div>
+            <div class="form-group">
+                <label for="new_worker_url">URL:</label>
+                <input type="text" id="new_worker_url" placeholder="https://example.com">
+            </div>
+            <div class="form-group">
+                <label for="new_worker_type">Type:</label>
+                <input type="text" id="new_worker_type" placeholder="selenium" value="selenium">
+            </div>
+            <div class="form-group">
+                <label for="new_worker_sleep">Default Sleep:</label>
+                <input type="number" id="new_worker_sleep" value="0.1" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+                <label for="new_worker_interval">Default Interval:</label>
+                <input type="number" id="new_worker_interval" value="0.1" step="0.1" min="0">
+            </div>
+            <div class="form-buttons">
+                <button class="create-btn" onclick="createNewWorker()">생성</button>
+                <button class="cancel-btn" onclick="hideNewWorkerForm()">취소</button>
+            </div>
+        </div>
+        
+        <!-- Worker 정보 -->
+        <div class="worker-info">
+            <h2>
+                Worker 정보
+                <button class="save-btn" onclick="saveWorker()">저장</button>
+            </h2>
+            <table>
+                <tr>
+                    <td>Name:</td>
+                    <td><input type="text" id="worker_name" value="{{ worker_info.get('name', '') }}" placeholder="Worker 이름"></td>
+                </tr>
+                <tr>
+                    <td>URL:</td>
+                    <td><input type="text" id="worker_url" value="{{ worker_info.get('url', '') }}" placeholder="https://example.com"></td>
+                </tr>
+                <tr>
+                    <td>Type:</td>
+                    <td><input type="text" id="worker_type" value="{{ worker_info.get('type', '') }}" placeholder="selenium"></td>
+                </tr>
+                <tr>
+                    <td>Default Sleep:</td>
+                    <td><input type="number" id="worker_sleep" value="{{ worker_info.get('default_sleep', 0.1) }}" step="0.1" min="0"></td>
+                </tr>
+                <tr>
+                    <td>Default Interval:</td>
+                    <td><input type="number" id="worker_interval" value="{{ worker_info.get('default_interval', 0.1) }}" step="0.1" min="0"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function showNewWorkerForm() {
+            document.getElementById('new-worker-form').style.display = 'block';
+            document.getElementById('new_filename').focus();
+        }
+
+        function hideNewWorkerForm() {
+            document.getElementById('new-worker-form').style.display = 'none';
+            // 폼 초기화
+            document.getElementById('new_filename').value = '';
+            document.getElementById('new_worker_name').value = '';
+            document.getElementById('new_worker_url').value = '';
+            document.getElementById('new_worker_type').value = 'selenium';
+            document.getElementById('new_worker_sleep').value = '0.1';
+            document.getElementById('new_worker_interval').value = '0.1';
+            document.getElementById('filename-status').textContent = '';
+            document.getElementById('filename-status').className = 'status-message';
+        }
+
+        function checkFilename() {
+            const filename = document.getElementById('new_filename').value.trim();
+            const statusElement = document.getElementById('filename-status');
+            
+            if (!filename) {
+                statusElement.textContent = '';
+                statusElement.className = 'status-message';
+                return;
+            }
+            
+            // .json 확장자 추가
+            let fullFilename = filename;
+            if (!filename.endsWith('.json')) {
+                fullFilename = filename + '.json';
+            }
+            
+            // 파일명 유효성 검사
+            const validFilename = /^[a-zA-Z0-9_-]+\.json$/.test(fullFilename);
+            if (!validFilename) {
+                statusElement.textContent = '파일명은 영문, 숫자, 언더스코어, 하이픈만 사용 가능합니다.';
+                statusElement.className = 'status-message exists';
+                return;
+            }
+            
+            // 중복 검사
+            fetch('/check_filename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: fullFilename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    statusElement.textContent = '이미 존재하는 파일명입니다.';
+                    statusElement.className = 'status-message exists';
+                } else {
+                    statusElement.textContent = '사용 가능한 파일명입니다.';
+                    statusElement.className = 'status-message available';
+                }
+            })
+            .catch(error => {
+                statusElement.textContent = '파일명 확인 중 오류가 발생했습니다.';
+                statusElement.className = 'status-message exists';
+            });
+        }
+
+        function createNewWorker() {
+            const filename = document.getElementById('new_filename').value.trim();
+            const workerName = document.getElementById('new_worker_name').value.trim();
+            const workerUrl = document.getElementById('new_worker_url').value.trim();
+            
+            if (!filename || !workerName || !workerUrl) {
+                showMessage('모든 필수 필드를 입력해주세요.', false);
+                return;
+            }
+            
+            // .json 확장자 추가
+            let fullFilename = filename;
+            if (!filename.endsWith('.json')) {
+                fullFilename = filename + '.json';
+            }
+            
+            const createBtn = document.querySelector('.create-btn');
+            createBtn.disabled = true;
+            createBtn.textContent = '생성 중...';
+            
+            const data = {
+                filename: fullFilename,
+                name: workerName,
+                url: workerUrl,
+                type: document.getElementById('new_worker_type').value,
+                default_sleep: document.getElementById('new_worker_sleep').value,
+                default_interval: document.getElementById('new_worker_interval').value
+            };
+            
+            fetch('/create_worker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage(data.message, data.success);
+                if (data.success) {
+                    hideNewWorkerForm();
+                    // 페이지 새로고침하여 새 파일 목록 로드
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    createBtn.textContent = '생성';
+                    createBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showMessage('Worker 생성 중 오류가 발생했습니다.', false);
+                createBtn.textContent = '생성';
+                createBtn.disabled = false;
+            });
+        }
+
+        function deleteWorker() {
+            const selectedFile = '{{ selected_file }}';
+            
+            if (!confirm(`정말로 "${selectedFile}" 파일을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            const deleteBtn = document.querySelector('.delete-worker-btn');
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = '삭제 중...';
+            
+            fetch('/delete_worker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: selectedFile })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage(data.message, data.success);
+                if (data.success) {
+                    // 삭제 성공 시 홈페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    deleteBtn.textContent = 'Worker 삭제';
+                    deleteBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showMessage('Worker 삭제 중 오류가 발생했습니다.', false);
+                deleteBtn.textContent = 'Worker 삭제';
+                deleteBtn.disabled = false;
+            });
+        }
+
+        function saveWorker() {
+            const saveBtn = document.querySelector('.save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '저장 중...';
+            
+            const data = {
+                selected_file: '{{ selected_file }}',
+                name: document.getElementById('worker_name').value,
+                url: document.getElementById('worker_url').value,
+                type: document.getElementById('worker_type').value,
+                default_sleep: document.getElementById('worker_sleep').value,
+                default_interval: document.getElementById('worker_interval').value
+            };
+            
+            fetch('/save_worker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage(data.message, data.success);
+                if (data.success) {
+                    saveBtn.textContent = '저장됨';
+                    setTimeout(() => {
+                        saveBtn.textContent = '저장';
+                        saveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    saveBtn.textContent = '저장';
+                    saveBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showMessage('저장 중 오류가 발생했습니다.', false);
+                saveBtn.textContent = '저장';
+                saveBtn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html> 

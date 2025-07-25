@@ -1,0 +1,321 @@
+{
+  "cells": [
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_13"
+      },
+      "source": "{\n  \"job_type\": \"request\",\n  \"action\": \"selenium\",\n  \"params\": {\n    \"url\": \"https://www.coupang.com/np/search?component=&q=무선청소기&channel=user&sorter=saleCountDesc&listSize=72\",\n    \"wait_time\": 2\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:28:20.331Z",
+          "output": "공용 데이터 딕셔너리 초기화됨\n🔍 Original crawl_data: {'job_type': 'request', 'action': 'selenium', 'params': {'request_type': 'selenium', 'url': 'https://www.coupang.com/np/search?component=&q=무선청소기&channel=user&sorter=saleCountDesc&listSize=72', 'wait_time': 2}}\n🔍 Converted args: {'type': 'request', 'action': 'selenium', 'request_type': 'selenium', 'url': 'https://www.coupang.com/np/search?component=&q=무선청소기&channel=user&sorter=saleCountDesc&listSize=72', 'wait_time': 2}\nA\nB\nD\n셀레니움에서 CSS 추출 중...\n셀레니움에서 CSS 추출: 14개\n웹폰트 처리 시작...\n웹폰트가 발견되지 않았습니다.\n이미지 변환 완료: img_src - https://static.coupangcdn.com/xa/cmg_paperboy/imag...\n이미지 변환 완료: img_src - https://static.coupangcdn.com/ta/cmg_paperboy/imag...\n이미지 변환 완료: img_src - https://image9.coupangcdn.com/image/displayitem/di...\n이미지 변환 완료: img_src - https://image10.coupangcdn.com/image/displayitem/d...\n이미지 변환 완료: img_src - https://image9.coupangcdn.com/image/displayitem/di...\n이미지 변환 완료: img_src - https://image10.coupangcdn.com/image/displayitem/d...\n이미지 변환 완료: img_src - https://image7.coupangcdn.com/image/displayitem/di...\n이미지 변환 완료: img_src - https://image10.coupangcdn.com/image/displayitem/d...\n이미지 변환 완료: img_src - https://image8.coupangcdn.com/image/displayitem/di...\n이미지 변환 완료: img_src - https://image8.coupangcdn.com/image/displayitem/di...\n이미지 10개를 base64로 변환하여 HTML에 포함했습니다.\nSYSTEM_SELENIUM에 데이터가 저장되었습니다:\n  - HTML 길이: 2854125\n  - CSS 파일 개수: 14 (selenium)\n  - URL: https://www.coupang.com/np/search?component=&q=%EB%AC%B4%EC%84%A0%EC%B2%AD%EC%86%8C%EA%B8%B0&channel=user&sorter=saleCountDesc&listSize=72\n  - Driver: 저장됨\nJob 'Crawl_13' 실행 결과: {'result': True, 'message': 'Selenium으로 https://www.coupang.com/np/search?component=&q=무선청소기&channel=user&sorter=saleCountDesc&listSize=72 접속 완료', 'data': <MODULE.module_engine_selenium.engine object at 0x7fee4c30ea70>}\nJob 결과가 shared_dict['Crawl_13']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_18"
+      },
+      "source": "{\n  \"job_type\": \"find\",\n  \"action\": \"xpath\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:00:50.905Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'click', 'params': {'speed': 1, 'focus': {'xpath': '/html/body/div[4]/div[2]/div[1]/div[2]/div[1]/form[1]/div[2]/input[1]'}}}\n🔍 Converted args: {'type': 'do', 'action': 'click', 'speed': 1, 'focus': {'xpath': '/html/body/div[4]/div[2]/div[1]/div[2]/div[1]/form[1]/div[2]/input[1]'}}\nJob 'Crawl_18' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_18']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_json",
+      "metadata": {
+        "name": "Crawl_16"
+      },
+      "source": "{\n  \"job_type\": \"do\",\n  \"action\": \"text\",\n  \"params\": {\n    \"focus\": \"current\",\n    \"text\": \"무선청소기\",\n    \"speed\": 0\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:01:07.428Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'text', 'params': {'focus': 'current', 'text': '무선청소기', 'speed': 0}}\n🔍 Converted args: {'type': 'do', 'action': 'text', 'focus': 'current', 'text': '무선청소기', 'speed': 0}\nJob 'Crawl_16' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_16']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_json",
+      "metadata": {
+        "name": "Crawl_17"
+      },
+      "source": "{\n  \"job_type\": \"do\",\n  \"action\": \"enter\",\n  \"params\": {\n    \"focus\": \"current\"\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:01:11.095Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'enter', 'params': {'focus': 'current'}}\n🔍 Converted args: {'type': 'do', 'action': 'enter', 'focus': 'current'}\nJob 'Crawl_17' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_17']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "shared_dict['SYSTEM_SELENIUM']['engine'].quit()",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:26:15.844Z",
+          "output": "실행 완료",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_json",
+      "metadata": {
+        "name": "Crawl_19"
+      },
+      "source": "{\n  \"job_type\": \"do\",\n  \"action\": \"click\",\n  \"params\": {\n    \"focus\": {\n      \"xpath\": \"/html/body/div[4]/div[1]/div[1]/menu[1]/li[4]\"\n    },\n    \"speed\": 1\n  }\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:02:52.903Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'click', 'params': {'focus': {'xpath': '/html/body/div[4]/div[1]/div[1]/menu[1]/li[4]'}, 'speed': 1}}\n🔍 Converted args: {'type': 'do', 'action': 'click', 'focus': {'xpath': '/html/body/div[4]/div[1]/div[1]/menu[1]/li[4]'}, 'speed': 1}\nJob 'Crawl_19' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_19']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_20"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:04:16.577Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'click', 'params': {'focus': {'xpath': '/html/body/div[2]/div[1]/div[3]/div[1]/form[1]/div[1]/div[1]/div[1]/label[1]/span[2]/input[1]'}, 'speed': 1}}\n🔍 Converted args: {'type': 'do', 'action': 'click', 'focus': {'xpath': '/html/body/div[2]/div[1]/div[3]/div[1]/form[1]/div[1]/div[1]/div[1]/label[1]/span[2]/input[1]'}, 'speed': 1}\nJob 'Crawl_20' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_20']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_21"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:04:54.383Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'text', 'params': {'focus': 'current', 'text': 'cyj05119', 'speed': '1'}}\n🔍 Converted args: {'type': 'do', 'action': 'text', 'focus': 'current', 'text': 'cyj05119', 'speed': '1'}\nJob 'Crawl_21' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_21']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_22"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:05:53.861Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'click', 'params': {'focus': {'xpath': '/html/body/div[2]/div[1]/div[3]/div[1]/form[1]/div[1]/div[2]/div[1]/label[1]/span[2]/input[1]'}, 'speed': 1}}\n🔍 Converted args: {'type': 'do', 'action': 'click', 'focus': {'xpath': '/html/body/div[2]/div[1]/div[3]/div[1]/form[1]/div[1]/div[2]/div[1]/label[1]/span[2]/input[1]'}, 'speed': 1}\nJob 'Crawl_22' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_22']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_23"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T06:06:33.253Z",
+          "output": "🔍 Original crawl_data: {'job_type': 'do', 'action': 'text', 'params': {'focus': 'current', 'text': '400cuem3@', 'speed': '1'}}\n🔍 Converted args: {'type': 'do', 'action': 'text', 'focus': 'current', 'text': '400cuem3@', 'speed': '1'}\nJob 'Crawl_23' 실행 결과: {'result': True, 'message': None, 'data': None}\nJob 결과가 shared_dict['Crawl_23']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['Crawl_16'])",
+      "output_history": [
+        {
+          "timestamp": "2025-07-23T04:08:49.214Z",
+          "output": "{'result': True, 'message': None, 'data': None}\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "crawl1"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T01:07:31.631Z",
+          "output": "공용 데이터 딕셔너리 초기화됨\nSYSTEM_REQUEST에 데이터가 저장되었습니다:\n  - HTML 길이: 49917\n  - CSS 파일 개수: 11\n  - URL: https://n-data.co.kr\nJob '' 실행 결과: {'result': True, 'message': 'HTML과 CSS가 SYSTEM_REQUEST에 저장되었습니다', 'data': None}\nJob 결과가 shared_dict['']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_5"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T21:16:07.031Z",
+          "output": "공용 데이터 딕셔너리 초기화됨\ndis_option: True\n셀레니움에서 CSS 추출 중...\n셀레니움에서 CSS 추출: 5개\n웹폰트 처리 시작...\n웹폰트가 발견되지 않았습니다.\n이미지 변환 완료: img_src - https://n-data.co.kr/img/img_analysis.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/img_analysis2.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/1.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/2.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/3.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/4.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/5.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/6.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/7.jpg...\n이미지 변환 완료: img_src - https://n-data.co.kr/img/portfolio/8.jpg...\n이미지 10개를 base64로 변환하여 HTML에 포함했습니다.\nSYSTEM_SELENIUM에 데이터가 저장되었습니다:\n  - HTML 길이: 52461\n  - CSS 파일 개수: 5 (selenium)\n  - URL: https://n-data.co.kr/\n  - Driver: 저장됨\nJob 'Crawl_5' 실행 결과: {'result': True, 'message': 'Selenium으로 https://n-data.co.kr 접속 완료', 'data': <MODULE.module_engine_selenium.engine object at 0x7f73c77f7d30>}\nJob 결과가 shared_dict['Crawl_5']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_11"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T04:50:07.605Z",
+          "output": "Traceback (most recent call last):\n  File \"/home/PROJECT/PROJECT_CRAWLER/CLASS/class_job.py\", line 40, in run\n    return self.engine.do_screen_shot(self.driver_number, filename)\nAttributeError: 'dict' object has no attribute 'do_screen_shot'\n\nJob 'Crawl_11' 실행 결과: {'result': False, 'message': 'Traceback (most recent call last):\\n  File \"/home/PROJECT/PROJECT_CRAWLER/CLASS/class_job.py\", line 40, in run\\n    return self.engine.do_screen_shot(self.driver_number, filename)\\nAttributeError: \\'dict\\' object has no attribute \\'do_screen_shot\\'\\n', 'data': None}\nJob 결과가 shared_dict['Crawl_11']에 저장되었습니다.\nJob 실행 완료\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['SYSTEM_SELENIUM']['html'][:20])",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T04:28:50.637Z",
+          "output": "<html><head>\n\n    <m\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict.keys())",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T02:50:50.727Z",
+          "output": "dict_keys(['SYSTEM_SELENIUM', 'Crawl_5'])\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['Crawl_5'])",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T02:50:52.159Z",
+          "output": "{'result': True, 'message': 'Selenium으로 https://n-data.co.kr 접속 완료', 'data': <MODULE.module_engine_selenium.engine object at 0x7f1695b32b00>}\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "shared_dict['Crawl_5']['data'].quit()",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T14:23:46.652Z",
+          "output": "Traceback (most recent call last):\n  File \"/home/PROJECT/PROJECT_CRAWLER/CLASS/CLASS_kernel_manager.py\", line 535, in execute\n    raise e\n  File \"/home/PROJECT/PROJECT_CRAWLER/CLASS/CLASS_kernel_manager.py\", line 514, in execute\n    exec(compiled_code, self.namespace)\n  File \"<string>\", line 1, in <module>\nKeyError: 'Crawl_5'\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "crawl_ui",
+      "metadata": {
+        "name": "Crawl_12"
+      },
+      "source": "{\n  \"job_type\": \"data\",\n  \"action\": \"\",\n  \"params\": {}\n}",
+      "output_history": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(shared_dict['Crawl_5']['data'].drivers)",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T01:31:21.443Z",
+          "output": "{}\n",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "print(\"XXX\")",
+      "output_history": [
+        {
+          "timestamp": "2025-07-22T02:50:17.225Z",
+          "output": "실행 완료",
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "name": ""
+      },
+      "source": "pri",
+      "output_history": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.0"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 4
+}

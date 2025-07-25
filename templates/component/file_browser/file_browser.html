@@ -1,0 +1,373 @@
+<!-- file-browser 컴포넌트 (순수 파일 브라우저) -->
+<!-- CSS는 notebook.html에서 처리됨 -->
+
+<div class="file-browser-content">
+    <div class="file-browser-header">
+        <div class="file-browser-controls">
+            <button class="btn btn-primary" onclick="refreshFileTree()">새로고침</button>
+            <button class="btn btn-success" onclick="createNewFile()">새 파일</button>
+            <button class="btn btn-secondary" onclick="uploadFile()">업로드</button>
+        </div>
+        <input type="text" class="search-box" placeholder="파일 검색..." onkeyup="filterFiles(this.value)">
+    </div>
+    <div class="file-tree" id="fileTree">
+        <div class="loading">
+            <div class="spinner"></div>
+            파일 목록을 불러오는 중...
+        </div>
+    </div>
+</div>
+
+<script>
+// 변수들은 notebook.html에서 이미 선언됨
+let fileBrowserCallback = null;
+
+function setFileBrowserCallback(fn) {
+    fileBrowserCallback = fn;
+}
+
+
+
+function loadFileTree() {
+    // console.log('[파일브라우저] 파일 목록 로드 시작');
+    
+    fetch('/api/files')
+        .then(response => {
+            // console.log('[파일브라우저] API 응답 상태:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            // console.log('[파일브라우저] 받은 데이터:', data);
+            fileTreeData = data.files || [];
+            // console.log('[파일브라우저] 파일 개수:', fileTreeData.length);
+            renderFileTree(fileTreeData);
+            
+            // 파일 브라우저 로드 완료 후 노트북 콜백 설정
+            if (typeof window.setNotebookCallback === 'function') {
+                // console.log('[파일브라우저] 노트북 콜백 설정 호출');
+                window.setNotebookCallback();
+            } else {
+                console.error('[파일브라우저] window.setNotebookCallback 함수를 찾을 수 없음');
+            }
+        })
+        .catch(error => {
+            console.error('[파일브라우저] 파일 목록 로드 실패:', error);
+            document.getElementById('fileTree').innerHTML = 
+                '<div class="error-message">파일 목록을 불러올 수 없습니다.</div>';
+        });
+}
+function renderFileTree(files) {
+    // console.log('[파일브라우저] 파일 트리 렌더링 시작, 파일 개수:', files.length);
+    
+    const fileTree = document.getElementById('fileTree');
+    if (!fileTree) {
+        console.error('[파일브라우저] fileTree 엘리먼트를 찾을 수 없음');
+        return;
+    }
+    
+    fileTree.innerHTML = '';
+    if (!files || files.length === 0) {
+        // console.log('[파일브라우저] 파일이 없음, 빈 상태 표시');
+        fileTree.innerHTML = '<div class="empty-content"><p>파일이 없습니다</p></div>';
+        return;
+    }
+    
+    files.forEach((file, index) => {
+        // console.log(`[파일브라우저] 파일 ${index + 1} 렌더링:`, file.name, file.type);
+        const fileItem = createFileItemRecursive(file, 0);
+        fileTree.appendChild(fileItem);
+    });
+    
+    // console.log('[파일브라우저] 파일 트리 렌더링 완료');
+}
+function createFileItemRecursive(file, depth = 0) {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.setAttribute('data-path', file.path);
+    fileItem.setAttribute('data-type', file.type);
+    fileItem.setAttribute('data-depth', depth);
+    let folderIcon = '';
+    if (file.type === 'directory') {
+        folderIcon = '<span class="folder-toggle" style="user-select:none;cursor:pointer;">▶</span>';
+    }
+    fileItem.innerHTML = `
+        <div class="file-row">
+            <div class="file-info">
+                ${folderIcon}
+                <span class="file-icon"></span>
+                <span class="file-name">${file.name}</span>
+            </div>
+            <div class="file-actions">
+                <button class="file-action-btn" onclick="event.stopPropagation(); showContextMenu(event, '${file.path}')">⋮</button>
+            </div>
+        </div>
+    `;
+    if (file.type === 'directory') {
+        fileItem.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (e.target.classList.contains('folder-toggle')) {
+                const childrenContainer = fileItem.querySelector('.folder-children');
+                const toggle = fileItem.querySelector('.folder-toggle');
+                if (childrenContainer) {
+                    const isOpen = childrenContainer.classList.contains('expanded');
+                    if (isOpen) {
+                        childrenContainer.classList.remove('expanded');
+                        toggle.textContent = '▶';
+                    } else {
+                        childrenContainer.classList.add('expanded');
+                        toggle.textContent = '▼';
+                    }
+                }
+            }
+        });
+    } else {
+        fileItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // 파일 내용을 콘솔에 출력
+            // console.log('[파일브라우저] 파일 클릭됨:', file.name, file.path);
+            fetch(`/api/files/content?path=${encodeURIComponent(file.path)}`)
+                .then(res => res.json())
+                .then(data => {
+                    // console.log('[파일브라우저] 파일명:', file.name);
+                    if (data && data.content) {
+                        // console.log('[파일브라우저] 내용 앞부분:', data.content.slice(0, 100));
+                        // 노트북에 파일 내용 전달
+                        if (typeof fileBrowserCallback === 'function') {
+                            fileBrowserCallback(file, data.content);
+                        }
+                        
+                        // 파일 타입이 커널을 지원하는 경우 기존 커널 확인만
+                        const fileName = file.name.toLowerCase();
+                        if (fileName.endsWith('.py') || fileName.endsWith('.ipynb') || fileName.endsWith('.npn')) {
+            
+                            // 약간의 지연을 두어 중복 호출 방지
+                            setTimeout(() => {
+                                if (typeof checkKernelForFile === 'function') {
+                                    checkKernelForFile(file.path);
+                                } else {
+                                    console.error('[파일브라우저] checkKernelForFile 함수를 찾을 수 없음');
+                                }
+                            }, 100);
+                        }
+                    } else {
+                        // console.log('[파일브라우저] 내용 없음');
+                        if (typeof fileBrowserCallback === 'function') {
+                            fileBrowserCallback(file, '');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('[파일브라우저] 파일 내용 로드 실패:', error);
+                });
+        });
+    }
+    fileItem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e, file.path);
+    });
+    if (file.type === 'directory' && file.children && file.children.length > 0) {
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'folder-children';
+        file.children.forEach(child => {
+            const childItem = createFileItemRecursive(child, depth + 1);
+            childrenContainer.appendChild(childItem);
+        });
+        fileItem.appendChild(childrenContainer);
+    }
+    return fileItem;
+}
+function showContextMenu(event, filePath) {
+    event.preventDefault();
+    const contextMenu = document.getElementById('contextMenu');
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = event.pageX + 'px';
+    contextMenu.style.top = event.pageY + 'px';
+    contextMenu.setAttribute('data-file-path', filePath);
+}
+function hideContextMenu() {
+    document.getElementById('contextMenu').style.display = 'none';
+}
+function openFile() {
+    const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+    const file = fileTreeData.find(f => f.path === filePath);
+    
+    hideContextMenu();
+}
+function refreshFileTree() {
+    loadFileTree();
+}
+function filterFiles(searchTerm) {
+    const fileItems = document.querySelectorAll('.file-item');
+    fileItems.forEach(item => {
+        const fileName = item.querySelector('.file-name').textContent.toLowerCase();
+        if (fileName.includes(searchTerm.toLowerCase())) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+function createNewFile() {
+    const fileName = prompt('새 파일 이름을 입력하세요 (예: example.npn):');
+    if (!fileName) return;
+    const isNpnFile = fileName.toLowerCase().endsWith('.npn');
+    let initialContent = '';
+    if (isNpnFile) {
+        const crawlData = {
+            "job_type": "do",
+            "action": "click",
+            "params": {
+                "focus": "{\"xpath\": \"//button[@id='login']\"}",
+                "speed": 1.0
+            }
+        };
+        initialContent = JSON.stringify({
+            "cells": [
+                {
+                    "cell_type": "crawl_ui",
+                    "metadata": {},
+                    "source": JSON.stringify(crawlData, null, 2)
+                }
+            ],
+            "metadata": {
+                "kernelspec": {
+                    "display_name": "Python 3",
+                    "language": "python",
+                    "name": "python3"
+                },
+                "language_info": {
+                    "codemirror_mode": {
+                        "name": "ipython",
+                        "version": 3
+                    },
+                    "file_extension": ".py",
+                    "mimetype": "text/x-python",
+                    "name": "python",
+                    "nbconvert_exporter": "python",
+                    "pygments_lexer": "ipython3",
+                    "version": "3.8.0"
+                }
+            },
+            "nbformat": 4,
+            "nbformat_minor": 4
+        }, null, 2);
+    }
+    fetch('/api/files/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: fileName,
+            content: initialContent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadFileTree();
+        } else {
+            alert(data.message || '파일 생성에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('파일 생성 실패:', error);
+        alert('파일 생성에 실패했습니다.');
+    });
+}
+function uploadFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/api/files/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadFileTree();
+            } else {
+                alert(data.message || '파일 업로드에 실패했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('파일 업로드 실패:', error);
+            alert('파일 업로드에 실패했습니다.');
+        });
+    };
+    input.click();
+}
+function renameFile() {
+    const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+    const file = fileTreeData.find(f => f.path === filePath);
+    if (!file) return;
+    const newName = prompt('새 이름을 입력하세요:', file.name);
+    if (!newName || newName === file.name) return;
+    fetch('/api/files/rename', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            old_path: filePath,
+            new_name: newName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadFileTree();
+        } else {
+            alert(data.message || '파일 이름 변경에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('파일 이름 변경 실패:', error);
+        alert('파일 이름 변경에 실패했습니다.');
+    });
+}
+function deleteFile() {
+    const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+    const file = fileTreeData.find(f => f.path === filePath);
+    if (!file) return;
+    if (!confirm(`정말로 "${file.name}"을 삭제하시겠습니까?`)) {
+        return;
+    }
+    fetch('/api/files/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            path: filePath
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadFileTree();
+        } else {
+            alert(data.message || '파일 삭제에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('파일 삭제 실패:', error);
+        alert('파일 삭제에 실패했습니다.');
+    });
+}
+function copyFilePath() {
+    const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+    navigator.clipboard.writeText(filePath).then(() => {
+        alert('파일 경로가 클립보드에 복사되었습니다.');
+    });
+}
+// switchSidebarTab 함수는 notebook.html에서 정의됨
+// 파일 브라우저 로드
+loadFileTree();
+</script> 

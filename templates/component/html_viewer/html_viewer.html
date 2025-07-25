@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 뷰어</title>
+    <style>
+        .html-viewer-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .html-viewer-header {
+            background: #2d3748;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .html-viewer-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .html-viewer-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .kernel-info {
+            background: #495057;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+
+        .html-viewer-btn {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.8rem;
+            background: transparent;
+            color: #666;
+            width: 48px;
+            height: 48px;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .html-viewer-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .html-viewer-btn:focus {
+            outline: none;
+        }
+
+        .input-with-unit {
+            position: relative;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .input-with-unit::after {
+            content: "s";
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+
+        .refresh-interval-input {
+            width: 60px;
+            padding: 0.5rem 0.6rem;
+            padding-right: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-align: center;
+            background: white;
+            color: #333;
+        }
+
+        .refresh-interval-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+
+
+        .html-viewer-btn.active {
+            background: rgba(34, 197, 94, 0.1) !important;
+            color: #22c55e !important;
+        }
+
+        .html-viewer-btn.active:hover {
+            background: rgba(34, 197, 94, 0.2) !important;
+        }
+        
+        /* 강제 새로고침 버튼 스타일 */
+        .force-refresh-btn {
+            background: rgba(220, 53, 69, 0.1) !important;
+            color: #dc3545 !important;
+            border: 1px solid rgba(220, 53, 69, 0.3) !important;
+            font-weight: bold;
+        }
+        
+        .force-refresh-btn:hover {
+            background: rgba(220, 53, 69, 0.2) !important;
+            color: #c82333 !important;
+            border-color: rgba(200, 35, 51, 0.5) !important;
+        }
+        
+        .force-refresh-btn:active {
+            background: rgba(220, 53, 69, 0.3) !important;
+        }
+
+        .html-viewer-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+        }
+
+        .html-preview-header {
+            background: #f1f3f4;
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .html-preview-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .key-input {
+            padding: 0.3rem 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            width: 120px;
+        }
+
+        .key-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .html-preview-btn {
+            padding: 0.3rem 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .html-preview-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .html-preview-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .html-preview-frame {
+            flex: 1;
+            border: none;
+            background: white;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .html-preview-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .html-preview-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .element-highlight {
+            position: fixed;
+            background: rgba(0, 123, 255, 0.2);
+            border: 2px solid #007bff;
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 10000;
+            transition: all 0.1s ease;
+            box-sizing: border-box;
+        }
+
+        .element-info {
+            position: fixed;
+            background: #2d3748;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            max-width: 200px;
+            z-index: 10001;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
+        .element-info::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 10px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid #2d3748;
+        }
+
+        /* 우클릭 메뉴 스타일 */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0.5rem 0;
+            z-index: 99999;
+            min-width: 150px;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .context-menu-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #374151;
+            transition: background-color 0.2s;
+        }
+
+        .context-menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 0.25rem 0;
+        }
+
+        .html-viewer-footer {
+            background: #f1f3f4;
+            padding: 0.8rem;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-indicator.ready {
+            background: #28a745;
+        }
+
+        .status-indicator.loading {
+            background: #ffc107;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .no-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="html-viewer-container">
+        <div class="html-viewer-header">
+            <h3>🔍 HTML 뷰어</h3>
+            <div class="html-viewer-controls">
+                <div class="input-with-unit">
+                    <input type="number" id="refreshInterval" class="refresh-interval-input" 
+                           min="0.5" max="60" step="0.1" value="5" 
+                           title="새로고침 간격 (초, 최소 0.5초)">
+                </div>
+                <button class="html-viewer-btn" onclick="refreshView()" title="새로고침">
+                    🔄
+                </button>
+                <button class="html-viewer-btn force-refresh-btn" onclick="forceRefreshView()" title="강제 새로고침 (이미지 재변환)">
+                    🔴
+                </button>
+                <button class="html-viewer-btn" id="autoRefreshToggle" onclick="toggleAutoRefresh()" title="자동 새로고침 시작">
+                    <span id="autoRefreshIcon">⏸️</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="html-viewer-content">
+            <div class="html-preview-header">
+                <span>HTML 미리보기</span>
+                <div class="html-preview-controls">
+                    <input type="text" class="key-input" id="keyInput" placeholder="키 입력 (비어있으면 기본값)" onkeypress="if(event.key==='Enter') loadHTMLFromSharedDict()">
+                    <button class="html-preview-btn active" onclick="toggleHighlightMode('hover')">호버 모드</button>
+                    <button class="html-preview-btn" onclick="toggleHighlightMode('click')">클릭 모드</button>
+                </div>
+            </div>
+            <div class="html-preview-frame" id="previewFrame">
+                <iframe id="htmlPreview" 
+                        sandbox="allow-same-origin allow-forms allow-popups allow-modals allow-scripts"
+                        style="width: 100%; height: 100%; border: none; background: white;">
+                </iframe>
+                <div class="html-preview-overlay" id="previewOverlay"></div>
+                <div class="no-content" id="noContent">
+                    <div>
+                        <p>HTML 내용이 없습니다</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">HTML 코드를 설정해주세요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="html-viewer-footer">
+            <span class="status-indicator ready" id="statusIndicator"></span>
+            <span id="statusText">준비됨 - HTML 내용을 설정해주세요</span>
+        </div>
+    </div>
+
+    <!-- 우클릭 메뉴 -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="copyXPath()">XPath 복사</div>
+        <div class="context-menu-item" onclick="copyCSSSelector()">CSS 선택자 복사</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="copyElementHTML()">HTML 복사</div>
+        <div class="context-menu-item" onclick="copyElementText()">텍스트 복사</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="inspectElement()">요소 검사</div>
+    </div>
+
+    <script src="html_viewer.js"></script>
+</body>
+</html> 

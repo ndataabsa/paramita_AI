@@ -1,0 +1,55 @@
+{
+    "worker": {
+        "name": "파고 수집",
+        "url": "WKLFNAWL",
+        "type": "selenium",
+        "default_sleep": 0.1,
+        "default_interval": 0.1,
+        "jobs": [
+            {
+                "name": "새 Job",
+                "type": "find",
+                "params": {
+                    "find_type": "id",
+                    "find_range": "self",
+                    "find_item": "GJY"
+                }
+            },
+            {
+                "name": "새 Job",
+                "type": "data",
+                "params": {
+                    "from": "새 Job",
+                    "to": "RESULT",
+                    "convert_type": "to_dataframe"
+                }
+            },
+            {
+                "name": "새 Job",
+                "type": "save",
+                "params": {
+                    "save_type": "mysql",
+                    "to": "RESULT",
+                    "name": "YRDY",
+                    "encoding": "utf-8"
+                }
+            },
+            {
+                "name": "새 Job",
+                "type": "python",
+                "params": {
+                    "script_path": "MHKLH",
+                    "to": "PYTHON RESULT",
+                    "arg_count": "3",
+                    "from_0": "RESULT",
+                    "from_1": "DAGTA2"
+                }
+            },
+            {
+                "name": "새 Job",
+                "type": "request_post",
+                "params": {}
+            }
+        ]
+    }
+}

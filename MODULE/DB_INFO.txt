@@ -1,0 +1,8 @@
+{"datas":{
+"info":{
+            "UserName": "db_user",
+            "mysqlUrl": "106.254.246.83:3306/nhdb?charset=utf8",
+            "Password": "paramitadbpass"
+        }
+    }
+}

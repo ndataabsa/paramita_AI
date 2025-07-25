@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Configuration Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .file-selector {
+            background-color: #fff3e0;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border: 1px solid #ffb74d;
+        }
+        .file-selector h2 {
+            margin: 0 0 15px 0;
+            color: #f57c00;
+            font-size: 18px;
+        }
+        .file-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .file-selector button {
+            padding: 8px 16px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .file-selector button:hover {
+            background-color: #1976d2;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .nav-btn {
+            padding: 15px 30px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .nav-btn:hover {
+            background-color: #45a049;
+        }
+        .nav-btn.worker {
+            background-color: #2196f3;
+        }
+        .nav-btn.worker:hover {
+            background-color: #1976d2;
+        }
+        .nav-btn.jobs {
+            background-color: #ff9800;
+        }
+        .nav-btn.jobs:hover {
+            background-color: #f57c00;
+        }
+        .nav-btn.kernel {
+            background-color: #9c27b0;
+        }
+        .nav-btn.kernel:hover {
+            background-color: #7b1fa2;
+        }
+        .nav-btn.file-browser {
+            background-color: #607d8b;
+        }
+        .nav-btn.file-browser:hover {
+            background-color: #455a64;
+        }
+        .current-file {
+            font-weight: bold;
+            color: #1976d2;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Job Configuration Manager</h1>
+        
+        <!-- 파일 선택기 -->
+        <div class="file-selector">
+            <h2>Worker 파일 선택</h2>
+            <form method="GET" action="/">
+                <select name="file" onchange="this.form.submit()">
+                    {% for file in json_files %}
+                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>
+                        {{ file }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">로드</button>
+            </form>
+            <div class="current-file">현재 선택된 파일: {{ selected_file }}</div>
+        </div>
+        
+        <!-- 네비게이션 버튼들 -->
+        <div class="nav-buttons">
+            <a href="/worker?file={{ selected_file }}" class="nav-btn worker">Worker 설정</a>
+            <a href="/jobs?file={{ selected_file }}" class="nav-btn jobs">Jobs 관리</a>
+            <a href="/notebook?file={{ selected_file }}" class="nav-btn notebook">note</a>
+            <a href="/kernel" class="nav-btn kernel">Python 커널</a>
+        </div>
+    </div>
+</body>
+</html> 

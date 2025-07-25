@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobs 관리</title>
+    <link rel="stylesheet" href="/templates/jobs.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>Jobs 관리</h1>
+            <div class="nav-links">
+                <a href="/?file={{ selected_file }}" class="nav-link home">홈</a>
+                <a href="/worker?file={{ selected_file }}" class="nav-link">Worker 설정</a>
+                <a href="/notebook?file={{ selected_file }}" class="nav-link">Paramita AI</a>
+            </div>
+        </div>
+        
+        <!-- 파일 선택기 -->
+        <div class="file-selector">
+            <h2>Worker 파일:</h2>
+            <form method="GET" action="/jobs" style="display: flex; align-items: center; gap: 10px;">
+                <select name="file" onchange="this.form.submit()">
+                    {% for file in json_files %}
+                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>
+                        {{ file }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">로드</button>
+            </form>
+            <div class="current-file">{{ selected_file }}</div>
+        </div>
+        
+        <!-- 메시지 표시 영역 -->
+        <div id="message" class="message"></div>
+        
+        <!-- Jobs 헤더 -->
+        <div class="jobs-header">
+            <h2>Jobs ({{ jobs|length }}개)</h2>
+            <div class="session-kernel-info">
+                <span>세션 커널: <span id="sessionKernelId">-</span></span>
+                <button class="btn btn-primary" onclick="loadSessionKernelInfo()">커널 정보 로드</button>
+                <button class="btn btn-secondary" onclick="clearSessionKernel()">커널 초기화</button>
+                <button class="btn btn-danger" onclick="shutdownSessionKernel()">커널 종료</button>
+                <button class="btn btn-info" onclick="showSessionNamespace()">변수 보기</button>
+            </div>
+        </div>
+
+        <!-- Jobs 테이블 -->
+        <div id="jobs-container">
+            <table class="jobs-table">
+                            <thead>
+                <tr>
+                    <th>순서</th>
+                    <th>Job Name</th>
+                    <th>Type</th>
+                    <th>세부 타입</th>
+                    <th>Parameters</th>
+                    <th>실행</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+                <tbody id="jobs-tbody">
+                    <!-- JS에서 동적으로 렌더링 -->
+                </tbody>
+            </table>
+        </div>
+        <div id="no-jobs" class="no-jobs" style="display:none;">
+            <p>선택된 파일을 찾을 수 없거나 jobs가 없습니다.</p>
+        </div>
+
+    <!-- Floating Action Buttons -->
+    <button class="floating-add-btn" onclick="addJob()">+</button>
+    <button class="floating-save-btn" onclick="saveJobs()">모두 저장</button>
+
+    <script>
+        let currentJobs = {{ jobs | tojson }};
+        const jobTypes = {{ job_types | tojson }};
+        const focusTypes = {{ focus_types | tojson }};
+        
+        // 페이지를 떠날 때 커널 정리
+        window.addEventListener('beforeunload', function() {
+            fetch('/api/session/kernel/cleanup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).catch(error => {
+                // console.log('커널 정리 중 오류:', error);
+            });
+        });
+
+        // 파라미터 라벨을 한글로 변환하는 함수
+        function getParamLabel(param) {
+            const labels = {
+                // do 타입 파라미터
+                'focus': '포커스',
+                'speed': '속도',
+                'text': '텍스트',
+                'value': '값',
+                'sleep': '대기시간',
+                'max_time': '최대시간',
+                'speed_variation': '속도변화',
+                
+                // find 타입 파라미터
+                'find_type': '찾기타입',
+                'find_item': '찾기항목',
+                'find_range': '찾기범위',
+                'find_attribute': '찾기속성',
+                'source': '소스',
+                
+                // data 타입 파라미터
+                'from': '출발지',
+                'to': '도착지',
+                'convert_type': '변환타입',
+                'href_arg': 'HREF 인자',
+                'text_arg': '텍스트 인자',
+                'key_count': '키 개수',
+                
+                // save 타입 파라미터
+                'save_type': '저장타입',
+                'to': '저장할키',
+                'name': '이름',
+                'encoding': '인코딩',
+                
+                // load 타입 파라미터
+                'load_type': '로드타입',
+                'from': '저장될키',
+                'encoding': '인코딩',
+                
+                // python 타입 파라미터
+                'python_type': 'Python 실행타입',
+                'script_path': '스크립트경로',
+                'to': '결과저장키',
+                'arg_count': '인자개수',
+                'code': '실행코드',
+                
+                // wait 타입 파라미터
+                'wait_type': '대기타입',
+                'time': '대기시간',
+                
+                // run 타입 파라미터
+                'run_type': '실행타입',
+                'code': '실행코드',
+                'module': '모듈명',
+                'function': '함수명',
+                'args': '인자',
+                'kernel_id': '커널ID',
+                
+                // test 타입 파라미터
+                'test_type': '테스트타입',
+                'name': '변수명',
+                'value': '값',
+                'items': '항목들',
+                'key_value_pairs': '키:값 쌍들',
+                'print_result': '결과출력',
+                
+                // request 타입 파라미터
+                'request_type': '요청타입',
+                'url': 'URL',
+                'data': '데이터',
+                'wait_time': '대기시간'
+            };
+            return labels[param] || param;
+        }
+
+        function renderJobsTable() {
+            const tbody = document.getElementById('jobs-tbody');
+            const noJobsDiv = document.getElementById('no-jobs');
+            tbody.innerHTML = '';
+            if (!currentJobs || currentJobs.length === 0) {
+                noJobsDiv.style.display = '';
+                return;
+            } else {
+                noJobsDiv.style.display = 'none';
+            }
+            currentJobs.forEach((job, idx) => {
+                // Job row
+                const tr = document.createElement('tr');
+                tr.className = 'job-row';
+                tr.setAttribute('data-job-index', idx);
+                tr.style.cursor = 'move';
+                
+                // 순서
+                const tdIdx = document.createElement('td');
+                tdIdx.textContent = idx + 1;
+                tr.appendChild(tdIdx);
+                // Job Name
+                const tdName = document.createElement('td');
+                tdName.className = 'job-name';
+                const inputName = document.createElement('input');
+                inputName.type = 'text';
+                inputName.value = job.name || '';
+                inputName.onchange = (e) => updateJob(idx, 'name', e.target.value);
+                tdName.appendChild(inputName);
+                tr.appendChild(tdName);
+                // Type
+                const tdType = document.createElement('td');
+                const selectType = document.createElement('select');
+                Object.entries(jobTypes).forEach(([typeKey, typeInfo]) => {
+                    const opt = document.createElement('option');
+                    opt.value = typeKey;
+                    opt.textContent = typeInfo.name;
+                    if (job.type === typeKey) opt.selected = true;
+                    selectType.appendChild(opt);
+                });
+                selectType.onchange = (e) => updateJobType(idx, e.target.value);
+                tdType.appendChild(selectType);
+                tr.appendChild(tdType);
+                // Action/Find Type
+                const tdAction = document.createElement('td');
+                if (job.type === 'do') {
+                    const selectAction = document.createElement('select');
+                    selectAction.className = 'action-select';
+                    Object.entries(jobTypes.do.actions).forEach(([actionKey, actionInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = actionKey;
+                        opt.textContent = actionInfo.name;
+                        if ((job.params||{}).action === actionKey) opt.selected = true;
+                        selectAction.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 액션 선택
+                    if (!(job.params||{}).action && Object.keys(jobTypes.do.actions).length > 0) {
+                        const firstAction = Object.keys(jobTypes.do.actions)[0];
+                        selectAction.value = firstAction;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.action = firstAction;
+                    }
+                    selectAction.onchange = (e) => updateJob(idx, 'params.action', e.target.value);
+                    tdAction.appendChild(selectAction);
+                } else if (job.type === 'find') {
+                    const selectFind = document.createElement('select');
+                    selectFind.className = 'action-select';
+                    Object.entries(jobTypes.find.find_types).forEach(([findKey, findInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = findKey;
+                        opt.textContent = findInfo.name;
+                        if ((job.params||{}).find_type === findKey) opt.selected = true;
+                        selectFind.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 찾기 타입 선택
+                    if (!(job.params||{}).find_type && Object.keys(jobTypes.find.find_types).length > 0) {
+                        const firstFindType = Object.keys(jobTypes.find.find_types)[0];
+                        selectFind.value = firstFindType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.find_type = firstFindType;
+                    }
+                    selectFind.onchange = (e) => updateJob(idx, 'params.find_type', e.target.value);
+                    tdAction.appendChild(selectFind);
+                } else if (job.type === 'data') {
+                    const selectConvertType = document.createElement('select');
+                    selectConvertType.className = 'action-select';
+                    // 순서대로 정렬된 변환 타입들
+                    const sortedConvertTypes = [
+                        'to_html',
+                        'to_xpath', 
+                        'to_dataframe',
+                        'get_href',
+                        'get_hrefs',
+                        'get_text_all',
+                        'get_texts_all',
+                        'get_text_all_tagonly',
+                        'get_text_all_without_script',
+                        'key_to_list'
+                    ];
+                    
+                    sortedConvertTypes.forEach(convertKey => {
+                        if (jobTypes.data.convert_types[convertKey]) {
+                            const opt = document.createElement('option');
+                            opt.value = convertKey;
+                            opt.textContent = jobTypes.data.convert_types[convertKey].name;
+                            if ((job.params||{}).convert_type === convertKey) opt.selected = true;
+                            selectConvertType.appendChild(opt);
+                        }
+                    });
+                    // 기본값이 없으면 첫 번째 변환 타입 선택
+                    if (!(job.params||{}).convert_type && sortedConvertTypes.length > 0) {
+                        const firstConvertType = sortedConvertTypes[0];
+                        selectConvertType.value = firstConvertType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.convert_type = firstConvertType;
+                    }
+                    selectConvertType.onchange = (e) => updateJob(idx, 'params.convert_type', e.target.value);
+                    tdAction.appendChild(selectConvertType);
+                } else if (job.type === 'save') {
+                    tdAction.textContent = '데이터 저장';
+                } else if (job.type === 'load') {
+                    tdAction.textContent = '데이터 로드';
+                } else if (job.type === 'python') {
+                    const selectPythonType = document.createElement('select');
+                    selectPythonType.className = 'action-select';
+                    Object.entries(jobTypes.python.python_types).forEach(([pythonKey, pythonInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = pythonKey;
+                        opt.textContent = pythonInfo.name;
+                        if ((job.params||{}).python_type === pythonKey) opt.selected = true;
+                        selectPythonType.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 Python 타입 선택
+                    if (!(job.params||{}).python_type && Object.keys(jobTypes.python.python_types).length > 0) {
+                        const firstPythonType = Object.keys(jobTypes.python.python_types)[0];
+                        selectPythonType.value = firstPythonType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.python_type = firstPythonType;
+                    }
+                    selectPythonType.onchange = (e) => {
+                        updateJob(idx, 'params.python_type', e.target.value);
+                        // Python 타입이 변경되면 파라미터 목록 다시 렌더링
+                        setTimeout(() => renderJobsTable(), 100);
+                    };
+                    tdAction.appendChild(selectPythonType);
+                } else if (job.type === 'wait') {
+                    const selectWaitType = document.createElement('select');
+                    selectWaitType.className = 'action-select';
+                    Object.entries(jobTypes.wait.wait_types).forEach(([waitKey, waitInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = waitKey;
+                        opt.textContent = waitInfo.name;
+                        if ((job.params||{}).wait_type === waitKey) opt.selected = true;
+                        selectWaitType.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 대기 타입 선택
+                    if (!(job.params||{}).wait_type && Object.keys(jobTypes.wait.wait_types).length > 0) {
+                        const firstWaitType = Object.keys(jobTypes.wait.wait_types)[0];
+                        selectWaitType.value = firstWaitType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.wait_type = firstWaitType;
+                    }
+                    selectWaitType.onchange = (e) => updateJob(idx, 'params.wait_type', e.target.value);
+                    tdAction.appendChild(selectWaitType);
+                } else if (job.type === 'request') {
+                    const selectRequestType = document.createElement('select');
+                    selectRequestType.className = 'action-select';
+                    Object.entries(jobTypes.request.request_types).forEach(([requestKey, requestInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = requestKey;
+                        opt.textContent = requestInfo.name;
+                        if ((job.params||{}).request_type === requestKey) opt.selected = true;
+                        selectRequestType.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 요청 타입 선택
+                    if (!(job.params||{}).request_type && Object.keys(jobTypes.request.request_types).length > 0) {
+                        const firstRequestType = Object.keys(jobTypes.request.request_types)[0];
+                        selectRequestType.value = firstRequestType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.request_type = firstRequestType;
+                    }
+                    selectRequestType.onchange = (e) => updateJob(idx, 'params.request_type', e.target.value);
+                    tdAction.appendChild(selectRequestType);
+                } else if (job.type === 'run') {
+                    const selectRunType = document.createElement('select');
+                    selectRunType.className = 'action-select';
+                    Object.entries(jobTypes.run.run_types).forEach(([runKey, runInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = runKey;
+                        opt.textContent = runInfo.name;
+                        if ((job.params||{}).run_type === runKey) opt.selected = true;
+                        selectRunType.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 실행 타입 선택
+                    if (!(job.params||{}).run_type && Object.keys(jobTypes.run.run_types).length > 0) {
+                        const firstRunType = Object.keys(jobTypes.run.run_types)[0];
+                        selectRunType.value = firstRunType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.run_type = firstRunType;
+                    }
+                    selectRunType.onchange = (e) => updateJob(idx, 'params.run_type', e.target.value);
+                    tdAction.appendChild(selectRunType);
+                } else if (job.type === 'test') {
+                    const selectTestType = document.createElement('select');
+                    selectTestType.className = 'action-select';
+                    Object.entries(jobTypes.test.test_types).forEach(([testKey, testInfo]) => {
+                        const opt = document.createElement('option');
+                        opt.value = testKey;
+                        opt.textContent = testInfo.name;
+                        if ((job.params||{}).test_type === testKey) opt.selected = true;
+                        selectTestType.appendChild(opt);
+                    });
+                    // 기본값이 없으면 첫 번째 테스트 타입 선택
+                    if (!(job.params||{}).test_type && Object.keys(jobTypes.test.test_types).length > 0) {
+                        const firstTestType = Object.keys(jobTypes.test.test_types)[0];
+                        selectTestType.value = firstTestType;
+                        currentJobs[idx].params = currentJobs[idx].params || {};
+                        currentJobs[idx].params.test_type = firstTestType;
+                    }
+                    selectTestType.onchange = (e) => updateJob(idx, 'params.test_type', e.target.value);
+                    tdAction.appendChild(selectTestType);
+                } else {
+                    tdAction.textContent = '-';
+                }
+                tr.appendChild(tdAction);
+                // Parameters
+                const tdParams = document.createElement('td');
+                const paramsDiv = document.createElement('div');
+                paramsDiv.className = 'params-editor';
+                if (job.type === 'do' && (job.params||{}).action) {
+                    const action = jobTypes.do.actions[job.params.action] || {};
+                    (action.params||[]).forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        if (param === 'focus') {
+                            const selectFocus = document.createElement('select');
+                            focusTypes.forEach(focusType => {
+                                const opt = document.createElement('option');
+                                opt.value = focusType;
+                                opt.textContent = focusType;
+                                if ((job.params||{}).focus === focusType) opt.selected = true;
+                                selectFocus.appendChild(opt);
+                            });
+                            // 기본값이 없으면 첫 번째 포커스 타입 선택
+                            if (!(job.params||{}).focus && focusTypes.length > 0) {
+                                const firstFocusType = focusTypes[0];
+                                selectFocus.value = firstFocusType;
+                                currentJobs[idx].params = currentJobs[idx].params || {};
+                                currentJobs[idx].params.focus = firstFocusType;
+                            }
+                            selectFocus.onchange = (e) => updateJob(idx, 'params.focus', e.target.value);
+                            valueDiv.appendChild(selectFocus);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'find' && (job.params||{}).find_type) {
+                    const findType = jobTypes.find.find_types[job.params.find_type] || {};
+                    (findType.params||[]).forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        if (param === 'find_range') {
+                            const selectRange = document.createElement('select');
+                            (jobTypes.find.find_ranges||[]).forEach(rangeOption => {
+                                const opt = document.createElement('option');
+                                opt.value = rangeOption;
+                                opt.textContent = rangeOption;
+                                if ((job.params||{}).find_range === rangeOption) opt.selected = true;
+                                selectRange.appendChild(opt);
+                            });
+                            // 기본값이 없으면 첫 번째 범위 옵션 선택
+                            if (!(job.params||{}).find_range && (jobTypes.find.find_ranges||[]).length > 0) {
+                                const firstRangeOption = jobTypes.find.find_ranges[0];
+                                selectRange.value = firstRangeOption;
+                                currentJobs[idx].params = currentJobs[idx].params || {};
+                                currentJobs[idx].params.find_range = firstRangeOption;
+                            }
+                            selectRange.onchange = (e) => updateJob(idx, 'params.find_range', e.target.value);
+                            valueDiv.appendChild(selectRange);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'python') {
+                    const pythonType = (job.params||{}).python_type || 'file';
+                    let pythonParams = ['to'];
+                    
+                    // 선택된 Python 타입에 따라 파라미터 표시
+                    if (pythonType === 'file') {
+                        pythonParams = ['script_path', 'to', 'arg_count'];
+                    } else if (pythonType === 'code') {
+                        pythonParams = ['code', 'to'];
+                    }
+                    
+                    pythonParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'code') {
+                            const textarea = document.createElement('textarea');
+                            textarea.rows = 4;
+                            textarea.value = (job.params||{})[param] || 'print("Hello, World!")';
+                            textarea.placeholder = 'Python 코드를 입력하세요';
+                            textarea.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            textarea.onclick = (e) => e.stopPropagation();
+                            textarea.onmousedown = (e) => e.stopPropagation();
+                            textarea.onmouseup = (e) => e.stopPropagation();
+                            textarea.onfocus = (e) => e.stopPropagation();
+                            textarea.style.pointerEvents = 'auto';
+                            textarea.style.zIndex = '10';
+                            valueDiv.appendChild(textarea);
+                        } else if (param === 'arg_count') {
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.min = '0';
+                            input.value = (job.params||{})[param] || '0';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => {
+                                updateJob(idx, `params.${param}`, e.target.value);
+                                // 인자 개수가 변경되면 파라미터 목록 다시 렌더링
+                                setTimeout(() => renderJobsTable(), 100);
+                            };
+                            valueDiv.appendChild(input);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                    
+                    // file 타입이고 인자 개수가 0보다 큰 경우 from 파라미터들 추가
+                    if (pythonType === 'file') {
+                        const argCount = parseInt((job.params||{}).arg_count || 0);
+                        for (let i = 0; i < argCount; i++) {
+                            const row = document.createElement('div');
+                            row.className = 'param-row';
+                            const keyDiv = document.createElement('div');
+                            keyDiv.className = 'param-key';
+                            keyDiv.textContent = `인자 ${i+1} (from_${i}):`;
+                            const valueDiv = document.createElement('div');
+                            valueDiv.className = 'param-value';
+                            
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[`from_${i}`] || '';
+                            input.placeholder = `data_share_dict에서 가져올 키`;
+                            input.onchange = (e) => updateJob(idx, `params.from_${i}`, e.target.value);
+                            valueDiv.appendChild(input);
+                            
+                            row.appendChild(keyDiv);
+                            row.appendChild(valueDiv);
+                            paramsDiv.appendChild(row);
+                        }
+                    }
+                } else if (job.type === 'request') {
+                    const requestType = (job.params||{}).request_type || 'get';
+                    let requestParams = ['url'];
+                    
+                    // 선택된 요청 타입에 따라 추가 파라미터 표시
+                    if (requestType === 'post') {
+                        requestParams = ['url', 'data'];
+                    } else if (requestType === 'selenium') {
+                        requestParams = ['url', 'wait_time'];
+                    }
+                    
+                    requestParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = (job.params||{})[param] || '';
+                        input.placeholder = getParamLabel(param);
+                        input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                        valueDiv.appendChild(input);
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'data') {
+                    const convertType = (job.params||{}).convert_type || '';
+                    let dataParams = ['from', 'to'];
+                    
+                    // 선택된 변환 타입에 따라 추가 파라미터 표시
+                    if (convertType && jobTypes.data.convert_types[convertType]) {
+                        dataParams = jobTypes.data.convert_types[convertType].params;
+                    }
+                    
+                    dataParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'key_count') {
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.min = '1';
+                            input.value = (job.params||{})[param] || '1';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => {
+                                updateJob(idx, `params.${param}`, e.target.value);
+                                // 키 개수가 변경되면 파라미터 목록 다시 렌더링
+                                setTimeout(() => renderJobsTable(), 100);
+                            };
+                            valueDiv.appendChild(input);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                    
+                    // key_to_list 타입인 경우 키 개수에 따라 key 파라미터들 추가
+                    if (convertType === 'key_to_list') {
+                        const keyCount = parseInt((job.params||{}).key_count || 1);
+                        for (let i = 0; i < keyCount; i++) {
+                            const row = document.createElement('div');
+                            row.className = 'param-row';
+                            const keyDiv = document.createElement('div');
+                            keyDiv.className = 'param-key';
+                            keyDiv.textContent = `키 ${i+1} (key_${i}):`;
+                            const valueDiv = document.createElement('div');
+                            valueDiv.className = 'param-value';
+                            
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[`key_${i}`] || '';
+                            input.placeholder = `data_share_dict에서 가져올 키`;
+                            input.onchange = (e) => updateJob(idx, `params.key_${i}`, e.target.value);
+                            valueDiv.appendChild(input);
+                            
+                            row.appendChild(keyDiv);
+                            row.appendChild(valueDiv);
+                            paramsDiv.appendChild(row);
+                        }
+                    }
+                } else if (job.type === 'request') {
+                    const requestType = (job.params||{}).request_type || 'get';
+                    let requestParams = ['url'];
+                    
+                    // 선택된 요청 타입에 따라 추가 파라미터 표시
+                    if (requestType === 'post') {
+                        requestParams = ['url', 'data'];
+                    } else if (requestType === 'selenium') {
+                        requestParams = ['url', 'wait_time'];
+                    }
+                    
+                    requestParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = (job.params||{})[param] || '';
+                        input.placeholder = getParamLabel(param);
+                        input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                        valueDiv.appendChild(input);
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'wait') {
+                    const waitType = (job.params||{}).wait_type || '';
+                    let waitParams = ['wait_type'];
+                    
+                    // 선택된 대기 타입에 따라 추가 파라미터 표시
+                    if (waitType && jobTypes.wait.wait_types[waitType]) {
+                        waitParams = jobTypes.wait.wait_types[waitType].params;
+                        // wait_type은 항상 포함
+                        if (!waitParams.includes('wait_type')) {
+                            waitParams.unshift('wait_type');
+                        }
+                    }
+                    
+                    waitParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'wait_type') {
+                            const select = document.createElement('select');
+                            Object.entries(jobTypes.wait.wait_types).forEach(([waitKey, waitInfo]) => {
+                                const opt = document.createElement('option');
+                                opt.value = waitKey;
+                                opt.textContent = waitInfo.name;
+                                if ((job.params||{}).wait_type === waitKey) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else if (param === 'time') {
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.step = '0.1';
+                            input.min = '0.1';
+                            input.value = (job.params||{})[param] || '1.0';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'run') {
+                    const runType = (job.params||{}).run_type || '';
+                    let runParams = ['run_type'];
+                    
+                    // 선택된 실행 타입에 따라 추가 파라미터 표시
+                    if (runType && jobTypes.run.run_types[runType]) {
+                        runParams = jobTypes.run.run_types[runType].params;
+                        // run_type은 항상 포함
+                        if (!runParams.includes('run_type')) {
+                            runParams.unshift('run_type');
+                        }
+                    }
+                    
+                    runParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'run_type') {
+                            const select = document.createElement('select');
+                            Object.entries(jobTypes.run.run_types).forEach(([runKey, runInfo]) => {
+                                const opt = document.createElement('option');
+                                opt.value = runKey;
+                                opt.textContent = runInfo.name;
+                                if ((job.params||{}).run_type === runKey) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else if (param === 'code') {
+                            const textarea = document.createElement('textarea');
+                            textarea.rows = 4;
+                            textarea.value = (job.params||{})[param] || '';
+                            textarea.placeholder = getParamLabel(param);
+                            textarea.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(textarea);
+                        } else if (param === 'args') {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '{}';
+                            input.placeholder = 'JSON 형태로 입력 (예: {"key": "value"})';
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'test') {
+                    const testType = (job.params||{}).test_type || '';
+                    let testParams = ['test_type'];
+                    
+                    // 선택된 테스트 타입에 따라 추가 파라미터 표시
+                    if (testType && jobTypes.test.test_types[testType]) {
+                        testParams = jobTypes.test.test_types[testType].params;
+                        // test_type은 항상 포함
+                        if (!testParams.includes('test_type')) {
+                            testParams.unshift('test_type');
+                        }
+                    }
+                    
+                    testParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'test_type') {
+                            const select = document.createElement('select');
+                            Object.entries(jobTypes.test.test_types).forEach(([testKey, testInfo]) => {
+                                const opt = document.createElement('option');
+                                opt.value = testKey;
+                                opt.textContent = testInfo.name;
+                                if ((job.params||{}).test_type === testKey) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else if (param === 'print_result') {
+                            const select = document.createElement('select');
+                            const options = [
+                                {value: 'true', text: '출력'},
+                                {value: 'false', text: '출력 안함'}
+                            ];
+                            options.forEach(option => {
+                                const opt = document.createElement('option');
+                                opt.value = option.value;
+                                opt.textContent = option.text;
+                                if ((job.params||{}).print_result === (option.value === 'true')) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value === 'true');
+                            valueDiv.appendChild(select);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'save') {
+                    const saveParams = jobTypes.save.params || [];
+                    saveParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'save_type') {
+                            const select = document.createElement('select');
+                            ['excel', 'csv', 'txt', 'mysql', 'elasticsearch'].forEach(type => {
+                                const opt = document.createElement('option');
+                                opt.value = type;
+                                opt.textContent = type.toUpperCase();
+                                if ((job.params||{}).save_type === type) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else if (param === 'encoding') {
+                            const select = document.createElement('select');
+                            ['utf-8', 'utf-8-sig', 'cp949', 'euc-kr', 'latin-1'].forEach(enc => {
+                                const opt = document.createElement('option');
+                                opt.value = enc;
+                                opt.textContent = enc.toUpperCase();
+                                if ((job.params||{}).encoding === enc) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'load') {
+                    const loadParams = jobTypes.load.params || [];
+                    loadParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'load_type') {
+                            const select = document.createElement('select');
+                            ['excel', 'csv', 'txt', 'mysql', 'elasticsearch'].forEach(type => {
+                                const opt = document.createElement('option');
+                                opt.value = type;
+                                opt.textContent = type.toUpperCase();
+                                if ((job.params||{}).load_type === type) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else if (param === 'encoding') {
+                            const select = document.createElement('select');
+                            ['utf-8', 'utf-8-sig', 'cp949', 'euc-kr', 'latin-1'].forEach(enc => {
+                                const opt = document.createElement('option');
+                                opt.value = enc;
+                                opt.textContent = enc.toUpperCase();
+                                if ((job.params||{}).encoding === enc) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                            select.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(select);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                } else if (job.type === 'python') {
+                    const pythonParams = jobTypes.python.params || [];
+                    pythonParams.forEach(param => {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = getParamLabel(param) + ':';
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        if (param === 'arg_count') {
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.min = '0';
+                            input.value = (job.params||{})[param] || '0';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => {
+                                updateJob(idx, `params.${param}`, e.target.value);
+                                // 인자 개수가 변경되면 파라미터 목록 다시 렌더링
+                                setTimeout(() => renderJobsTable(), 100);
+                            };
+                            valueDiv.appendChild(input);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (job.params||{})[param] || '';
+                            input.placeholder = getParamLabel(param);
+                            input.onchange = (e) => updateJob(idx, `params.${param}`, e.target.value);
+                            valueDiv.appendChild(input);
+                        }
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    });
+                    
+                    // 인자 개수에 따라 from 파라미터들 추가
+                    const argCount = parseInt((job.params||{}).arg_count || 0);
+                    for (let i = 0; i < argCount; i++) {
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'param-key';
+                        keyDiv.textContent = `인자 ${i+1} (from_${i}):`;
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'param-value';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = (job.params||{})[`from_${i}`] || '';
+                        input.placeholder = `data_share_dict에서 가져올 키`;
+                        input.onchange = (e) => updateJob(idx, `params.from_${i}`, e.target.value);
+                        valueDiv.appendChild(input);
+                        
+                        row.appendChild(keyDiv);
+                        row.appendChild(valueDiv);
+                        paramsDiv.appendChild(row);
+                    }
+                } else {
+                    const pre = document.createElement('div');
+                    pre.className = 'params-json';
+                    pre.textContent = JSON.stringify(job.params||{}, null, 2);
+                    paramsDiv.appendChild(pre);
+                }
+                tdParams.appendChild(paramsDiv);
+                tr.appendChild(tdParams);
+                // 실행 버튼
+                const tdRun = document.createElement('td');
+                const runBtn = document.createElement('button');
+                runBtn.className = 'run-btn';
+                runBtn.textContent = '실행';
+                runBtn.onclick = () => runJob(idx);
+                tdRun.appendChild(runBtn);
+                tr.appendChild(tdRun);
+                
+                // 실행 결과 표시 영역 (숨겨진 상태)
+                const resultRow = document.createElement('tr');
+                resultRow.className = 'job-result-row';
+                resultRow.setAttribute('data-job-index', idx);
+                resultRow.style.display = 'none';
+                
+                const resultCell = document.createElement('td');
+                resultCell.colSpan = 7; // 모든 컬럼을 차지
+                resultCell.className = 'job-result';
+                resultRow.appendChild(resultCell);
+                
+                tbody.appendChild(resultRow);
+                tbody.appendChild(tr);
+                
+                // 삭제 버튼
+                const tdDel = document.createElement('td');
+                const delBtn = document.createElement('button');
+                delBtn.className = 'delete-btn';
+                delBtn.textContent = '삭제';
+                delBtn.onclick = () => deleteJob(idx);
+                tdDel.appendChild(delBtn);
+                tr.appendChild(tdDel);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showMessage(message, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageDiv.style.display = 'block';
+            // 메시지가 자동으로 사라지지 않도록 setTimeout 제거
+        }
+
+        function updateJob(jobIndex, field, value) {
+            const fieldParts = field.split('.');
+            let current = currentJobs[jobIndex];
+            for (let i = 0; i < fieldParts.length - 1; i++) {
+                if (!current[fieldParts[i]]) current[fieldParts[i]] = {};
+                current = current[fieldParts[i]];
+            }
+            current[fieldParts[fieldParts.length - 1]] = value;
+            renderJobsTable();
+        }
+
+        function updateJobType(jobIndex, newType) {
+            currentJobs[jobIndex].type = newType;
+            currentJobs[jobIndex].params = {};
+            
+            // 새 타입에 맞는 기본값 설정
+            if (newType === 'do') {
+                const firstAction = Object.keys(jobTypes.do.actions)[0];
+                const firstFocusType = focusTypes[0];
+                currentJobs[jobIndex].params = {
+                    action: firstAction,
+                    focus: firstFocusType
+                };
+            } else if (newType === 'find') {
+                const firstFindType = Object.keys(jobTypes.find.find_types)[0];
+                const firstRangeOption = jobTypes.find.find_ranges[0];
+                currentJobs[jobIndex].params = {
+                    find_type: firstFindType,
+                    find_range: firstRangeOption
+                };
+            } else if (newType === 'data') {
+                currentJobs[jobIndex].params = {
+                    from: '',
+                    to: '',
+                    convert_type: ''
+                };
+            } else if (newType === 'save') {
+                currentJobs[jobIndex].params = {
+                    save_type: 'excel',
+                    to: '',
+                    name: '',
+                    encoding: 'utf-8'
+                };
+            } else if (newType === 'load') {
+                currentJobs[jobIndex].params = {
+                    load_type: 'excel',
+                    from: '',
+                    name: '',
+                    encoding: 'utf-8'
+                };
+            } else if (newType === 'python') {
+                currentJobs[jobIndex].params = {
+                    script_path: '',
+                    to: '',
+                    arg_count: 0
+                };
+            }
+            
+            renderJobsTable();
+        }
+
+        function addJob() {
+            // 첫 번째 액션과 첫 번째 포커스 타입을 기본값으로 설정
+            const firstAction = Object.keys(jobTypes.do.actions)[0];
+            const firstFocusType = focusTypes[0];
+            const newJob = { 
+                name: '새 Job', 
+                type: 'do', 
+                params: {
+                    action: firstAction,
+                    focus: firstFocusType
+                }
+            };
+            currentJobs.push(newJob);
+            renderJobsTable();
+        }
+
+        function deleteJob(jobIndex) {
+            if (confirm('정말로 이 job을 삭제하시겠습니까?')) {
+                currentJobs.splice(jobIndex, 1);
+                renderJobsTable();
+            }
+        }
+
+        function runJob(jobIndex) {
+            const job = currentJobs[jobIndex];
+            if (!job) {
+                showMessage('실행할 job을 찾을 수 없습니다.', false);
+                return;
+            }
+
+            // 실행 중 표시
+            showJobResult(jobIndex, '실행 중...', 'running');
+
+            // 실행 버튼 비활성화
+            const runBtn = event.target;
+            const originalText = runBtn.textContent;
+            runBtn.disabled = true;
+            runBtn.textContent = '실행 중...';
+
+            // job 실행 요청
+            fetch('/run_job', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    job: job,
+                    selected_file: '{{ selected_file }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showJobResult(jobIndex, data.message, 'success');
+                } else {
+                    showJobResult(jobIndex, '실패: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Job 실행 오류:', error);
+                showJobResult(jobIndex, '오류: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // 실행 버튼 다시 활성화
+                runBtn.disabled = false;
+                runBtn.textContent = originalText;
+            });
+        }
+        
+        function showJobResult(jobIndex, message, type) {
+            const resultRow = document.querySelector(`tr.job-result-row[data-job-index="${jobIndex}"]`);
+            if (resultRow) {
+                const resultCell = resultRow.querySelector('.job-result');
+                resultCell.textContent = message;
+                resultCell.className = `job-result ${type}`;
+                resultRow.style.display = '';
+            }
+        }
+
+        function saveJobs() {
+            const saveBtn = document.querySelector('.floating-save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '저장 중...';
+            const data = { selected_file: '{{ selected_file }}', jobs: currentJobs };
+            fetch('/save_jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage(data.message, data.success);
+                if (data.success) {
+                    saveBtn.textContent = '저장됨';
+                    setTimeout(() => { saveBtn.textContent = '모두 저장'; saveBtn.disabled = false; }, 2000);
+                } else {
+                    saveBtn.textContent = '모두 저장';
+                    saveBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showMessage('저장 중 오류가 발생했습니다.', false);
+                saveBtn.textContent = '모두 저장';
+                saveBtn.disabled = false;
+            });
+        }
+
+        // 최초 렌더링
+        renderJobsTable();
+        
+        // 세션 커널 정보 로드
+        function loadSessionKernelInfo() {
+            fetch('/api/session/kernel/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('sessionKernelId').textContent = data.status.kernel_id;
+                    } else {
+                        document.getElementById('sessionKernelId').textContent = '오류';
+                    }
+                })
+                .catch(error => {
+                    console.error('세션 커널 정보 로드 실패:', error);
+                    document.getElementById('sessionKernelId').textContent = '오류';
+                });
+        }
+        
+        // 세션 커널 초기화
+        function clearSessionKernel() {
+            if (!confirm('세션 커널의 모든 변수를 초기화하시겠습니까?')) {
+                return;
+            }
+            
+            fetch('/api/session/kernel/clear', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('세션 커널이 초기화되었습니다.', true);
+                    loadSessionKernelInfo();
+                } else {
+                    showMessage('커널 초기화 실패: ' + data.error, false);
+                }
+            })
+            .catch(error => {
+                console.error('커널 초기화 실패:', error);
+                showMessage('커널 초기화 중 오류가 발생했습니다.', false);
+            });
+        }
+        
+        // 세션 커널 종료
+        function shutdownSessionKernel() {
+            if (!confirm('세션 커널을 완전히 종료하시겠습니까? 모든 변수가 삭제됩니다.')) {
+                return;
+            }
+            
+            fetch('/api/session/kernel/cleanup', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('세션 커널이 종료되었습니다.', true);
+                    document.getElementById('sessionKernelId').textContent = '-';
+                } else {
+                    showMessage('커널 종료 실패: ' + data.error, false);
+                }
+            })
+            .catch(error => {
+                console.error('커널 종료 실패:', error);
+                showMessage('커널 종료 중 오류가 발생했습니다.', false);
+            });
+        }
+        
+        // 세션 네임스페이스 보기
+        function showSessionNamespace() {
+            fetch('/api/session/kernel/namespace')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const namespace = data.namespace;
+                        let message = '현재 세션 변수:\n';
+                        
+                        if (Object.keys(namespace).length === 0) {
+                            message += '변수가 없습니다.';
+                        } else {
+                            for (const [key, value] of Object.entries(namespace)) {
+                                const valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                                message += `${key}: ${valueStr}\n`;
+                            }
+                        }
+                        
+                        alert(message);
+                    } else {
+                        showMessage('변수 정보 로드 실패: ' + data.error, false);
+                    }
+                })
+                .catch(error => {
+                    console.error('변수 정보 로드 실패:', error);
+                    showMessage('변수 정보를 가져오는데 실패했습니다.', false);
+                });
+        }
+        
+        // 드래그 기능 초기화
+        function initDragAndDrop() {
+            const tbody = document.getElementById('jobs-tbody');
+            let draggedElement = null;
+            let draggedIndex = null;
+            
+            tbody.addEventListener('mousedown', function(e) {
+                // job 행을 클릭했을 때만 드래그 시작
+                const jobRow = e.target.closest('tr.job-row');
+                if (jobRow && !e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select') && !e.target.closest('textarea')) {
+                    draggedElement = jobRow;
+                    draggedIndex = parseInt(jobRow.getAttribute('data-job-index'));
+                    
+                    draggedElement.classList.add('dragging');
+                    e.preventDefault();
+                }
+            });
+            
+            tbody.addEventListener('mousemove', function(e) {
+                if (draggedElement) {
+                    const targetRow = e.target.closest('tr.job-row');
+                    if (targetRow && targetRow !== draggedElement) {
+                        const targetIndex = parseInt(targetRow.getAttribute('data-job-index'));
+                        
+                        // 드래그 오버 효과
+                        targetRow.classList.add('drag-over');
+                        
+                        // 위치 변경
+                        if (draggedIndex !== targetIndex) {
+                            const jobs = [...currentJobs];
+                            const [movedJob] = jobs.splice(draggedIndex, 1);
+                            jobs.splice(targetIndex, 0, movedJob);
+                            currentJobs = jobs;
+                            
+                            // UI 업데이트
+                            renderJobsTable();
+                            
+                            // 새로운 인덱스 설정
+                            draggedIndex = targetIndex;
+                        }
+                    }
+                }
+            });
+            
+            tbody.addEventListener('mouseup', function(e) {
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                    document.querySelectorAll('.drag-over').forEach(row => {
+                        row.classList.remove('drag-over');
+                    });
+                    draggedElement = null;
+                    draggedIndex = null;
+                }
+            });
+        }
+        
+        // 페이지 로드 시 드래그 기능 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initDragAndDrop();
+        });
+    </script>
+</body>
+</html> 

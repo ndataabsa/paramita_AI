@@ -1,0 +1,22 @@
+{
+  "id": "chat_64c251e3",
+  "title": "새 채팅",
+  "user_id": "ndata-ohseong",
+  "created_at": "2025-07-22T23:30:09.359217",
+  "updated_at": "2025-07-22T23:30:09.359221",
+  "active": true,
+  "messages": [],
+  "settings": {
+    "model": "mock-ai",
+    "temperature": 0.7,
+    "max_tokens": 2000,
+    "system_prompt": "Python 코딩 어시스턴트"
+  },
+  "stats": {
+    "message_count": 0,
+    "user_message_count": 0,
+    "ai_message_count": 0,
+    "code_blocks_generated": 0,
+    "last_activity": "2025-07-22T23:30:09.359217"
+  }
+}

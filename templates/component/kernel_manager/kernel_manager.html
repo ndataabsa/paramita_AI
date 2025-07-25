@@ -1,0 +1,755 @@
+<!-- 커널 관리자 컴포넌트 -->
+<div class="kernel-manager-content" style="max-height: 80vh; overflow-y: auto;">
+    <div style="padding: 1rem;">
+        <h3 style="margin-top:0; font-size: 1.1rem;">커널 관리자</h3>
+        <div style="margin-bottom: 1rem;">
+            <strong style="font-size: 0.9rem;">프로젝트 커널 목록:</strong>
+            <div id="projectKernelsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #4a5568; border-radius: 4px; padding: 0.5rem;">없음</div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong style="font-size: 0.9rem;">스캔된 프로세스 커널 목록:</strong>
+            <div id="scannedKernelsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #4a5568; border-radius: 4px; padding: 0.5rem;">없음</div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <button class="btn btn-secondary" onclick="updateKernelList()" style="font-size: 0.75rem;">📋 커널 목록 새로고침</button>
+            <button class="btn btn-info" onclick="scanProcessKernels()" style="font-size: 0.75rem;">🔍 프로세스 커널 스캔</button>
+            <button class="btn btn-warning" onclick="cleanupInactiveKernels()" style="font-size: 0.75rem;">12시간 이상 비활성 커널 정리</button>
+            <button class="btn btn-danger" onclick="cleanupAllKernels()" style="font-size: 0.75rem;">모든 커널 정리</button>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/templates/component/kernel_manager/kernel_manager.css">
+<script>
+// --- 커널 관리자 함수들 (notebook.html.bak에서 추출) ---
+function initializeKernel() {
+    // console.log('=== initializeKernel 호출 ===');
+    // console.log('activeFile:', activeFile);
+    // console.log('activeFile 타입:', typeof activeFile);
+    
+    if (!activeFile) {
+        return;
+    }
+    const fileName = activeFile.split('/').pop().toLowerCase();
+    // console.log('파일명:', fileName);
+    // console.log('전체 경로:', activeFile);
+    
+    if (!fileName.endsWith('.py') && !fileName.endsWith('.ipynb') && !fileName.endsWith('.npn')) {
+        return;
+    }
+    if (!confirm('커널을 초기화하시겠습니까? 기존 커널이 있으면 종료 후 새 커널이 생성됩니다. 모든 변수와 실행 기록이 지워집니다.')) {
+        return;
+    }
+    const oldKernelId = fileKernels[activeFile];
+    const shutdownOldKernel = oldKernelId ? fetch(`/api/kernels/${oldKernelId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json()) : Promise.resolve({ success: true });
+    shutdownOldKernel.then(() => {
+        // 새로운 파일-사용자 커널 생성 API 사용
+        fetch('/api/kernels/file-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                file_path: activeFile
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // console.log('커널 초기화 응답:', data);
+            if (data.success) {
+                fileKernels[activeFile] = data.kernel_id;
+                updateKernelInfo();
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 활성';
+                    displayElement.style.color = '#68d391';
+                }
+                
+                // 커널 생성 후 즉시 시간 업데이트 시작
+                if (typeof startKernelTimeUpdate === 'function') {
+                    startKernelTimeUpdate();
+                }
+                
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #22543d; color: #9ae6b4; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+                successDiv.textContent = '새 커널이 생성되었습니다.';
+                document.body.appendChild(successDiv);
+                setTimeout(() => {
+                    successDiv.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+                }, 3000);
+                clearAllOutputs && clearAllOutputs();
+            }
+        })
+        .catch(error => {
+            // console.error('커널 생성 실패:', error);
+        });
+    });
+}
+function shutdownKernel() {
+    if (!activeFile || !fileKernels[activeFile]) {
+        return;
+    }
+    if (!confirm('커널을 종료하시겠습니까? 모든 변수와 실행 기록이 지워집니다.')) {
+        return;
+    }
+    const kernelId = fileKernels[activeFile];
+    fetch(`/api/kernels/${kernelId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+            .then(data => {
+            if (data.success) {
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #742a2a; color: #feb2b2; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+                successDiv.textContent = '커널이 종료되었습니다.';
+                document.body.appendChild(successDiv);
+                setTimeout(() => {
+                    successDiv.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+                }, 3000);
+                clearAllOutputs && clearAllOutputs();
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 비활성';
+                    displayElement.style.color = '#a0aec0';
+                }
+                
+                // 커널 종료 후 시간 표시 초기화
+                const timeDisplayElement = document.getElementById('kernelTimeDisplay');
+                if (timeDisplayElement) {
+                    timeDisplayElement.textContent = '남은 시간: --:--:--';
+                }
+                
+                // 시간 업데이트 중지
+                if (typeof stopKernelTimeUpdate === 'function') {
+                    stopKernelTimeUpdate();
+                }
+                
+                delete fileKernels[activeFile];
+        }
+    })
+    .catch(error => {
+        // console.error('커널 종료 실패:', error);
+    });
+}
+function refreshKernelList() {
+    // console.log('=== 커널 목록 새로고침 시작 ===');
+    
+    // 서버에서 커널 목록 가져오기
+    fetch('/api/kernels')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // console.log('서버 커널 목록:', data.kernels);
+                
+                // 파일-커널 매핑 새로고침
+                if (typeof restoreKernelState === 'function') {
+                    restoreKernelState();
+                }
+                
+                // 추가로 파일-커널 매핑도 직접 가져오기
+                fetch('/api/kernels/file-mappings')
+                    .then(response => response.json())
+                    .then(mappingData => {
+                        if (mappingData.success && mappingData.mappings) {
+                            // console.log('파일-커널 매핑:', mappingData.mappings);
+                            fileKernels = mappingData.mappings;
+                        }
+                        
+                        // UI 업데이트
+                        updateKernelInfo();
+                        
+
+                    })
+                    .catch(error => {
+                        // console.error('파일-커널 매핑 가져오기 실패:', error);
+                        // 매핑 실패해도 UI 업데이트
+                        updateKernelInfo();
+                    });
+            } else {
+                // console.error('커널 목록 가져오기 실패:', data.error);
+            }
+        })
+        .catch(error => {
+            // console.error('커널 목록 새로고침 오류:', error);
+        });
+}
+
+function scanProcessKernels() {
+    // console.log('=== 프로세스 커널 스캔 시작 ===');
+    
+    // 프로세스 커널 스캔 API 호출
+    fetch('/api/kernels/scan-process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // console.log('프로세스 커널 스캔 결과:', data.kernels);
+            
+            // 스캔된 커널 목록 업데이트
+            updateScannedKernelsList();
+        } else {
+            // console.error('프로세스 커널 스캔 실패:', data.error);
+        }
+    })
+    .catch(error => {
+        // console.error('프로세스 커널 스캔 오류:', error);
+    });
+}
+
+function updateKernelInfo() {
+    // console.log('=== updateKernelInfo 호출 ===');
+    // console.log('activeFile:', activeFile);
+    // console.log('fileKernels:', fileKernels);
+    
+    // 프로젝트 커널 목록 업데이트
+    const projectKernelsList = document.getElementById('projectKernelsList');
+    const kernelEntries = Object.entries(fileKernels || {});
+    // console.log('kernelEntries:', kernelEntries);
+    
+    if (kernelEntries.length > 0) {
+        projectKernelsList.innerHTML = kernelEntries.map(([filePath, kernelId]) => {
+            const fileName = filePath.split('/').pop();
+            const isActive = filePath === activeFile;
+            return `<div style="margin-bottom: 0.3rem; padding: 0.3rem; background: ${isActive ? '#2c5282' : '#4a5568'}; border-radius: 4px; border-left: 3px solid ${isActive ? '#63b3ed' : '#718096'};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <span style="${isActive ? 'color: #63b3ed;' : 'color: #e2e8f0;'} font-weight: bold; font-size: 0.85rem;">${fileName}</span>
+                        <span style="color: #a0aec0; font-size: 0.65rem; margin-left: 0.5rem;">${isActive ? '(활성)' : ''}</span>
+                    </div>
+                    <button onclick="shutdownKernelForFile('${filePath}')" style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.65rem; cursor: pointer;">종료</button>
+                </div>
+            </div>`;
+        }).join('');
+    } else {
+        projectKernelsList.innerHTML = '없음';
+    }
+    
+    // console.log('=== updateKernelInfo 완료 ===');
+}
+
+// 페이지 로드 시 초기화 (스캔 없이)
+document.addEventListener('DOMContentLoaded', function() {
+    updateKernelInfo();
+    updateKernelList(); // 커널 목록 새로고침 추가
+    // 스캔된 커널 목록은 수동으로만 업데이트
+    document.getElementById('scannedKernelsList').innerHTML = '프로세스 커널을 스캔하려면 "프로세스 커널 스캔" 버튼을 클릭하세요.';
+});
+
+function updateScannedKernelsList() {
+    // 기존 커널 목록만 가져오기 (스캔 없이)
+    fetch('/api/kernels')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const scannedKernelsList = document.getElementById('scannedKernelsList');
+            const scannedKernels = [];
+            
+            // 프로세스 커널만 필터링
+            Object.entries(data.kernels).forEach(([kernelId, status]) => {
+                if (kernelId.startsWith('process_kernel_')) {
+                    scannedKernels.push({ kernelId, status });
+                }
+            });
+            
+            if (scannedKernels.length > 0) {
+                scannedKernelsList.innerHTML = scannedKernels.map(({ kernelId, status }) => {
+                    const pid = kernelId.replace('process_kernel_', '');
+                    
+                    return `<div style="margin-bottom: 0.3rem; padding: 0.3rem; background: #4a5568; border-radius: 4px; border-left: 3px solid #68d391;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <span style="color: #68d391; font-weight: bold; font-size: 0.85rem;">PID: ${pid}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.2rem;">
+                                <button onclick="toggleProcessDetails('${kernelId}')" style="background: #718096; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.65rem; cursor: pointer;">상세</button>
+                                <button onclick="addProcessKernelToProject('${kernelId}')" style="background: #3182ce; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.65rem; cursor: pointer;">추가</button>
+                                <button onclick="terminateProcessKernel('${kernelId}')" style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.65rem; cursor: pointer;">종료</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                scannedKernelsList.innerHTML = '스캔된 프로세스 커널이 없습니다.';
+            }
+        } else {
+            document.getElementById('scannedKernelsList').innerHTML = '커널 목록을 가져올 수 없습니다.';
+        }
+    })
+    .catch(error => {
+        document.getElementById('scannedKernelsList').innerHTML = '커널 목록을 가져올 수 없습니다.';
+    });
+}
+
+function toggleProcessDetails(kernelId) {
+    // console.log('=== 프로세스 상세 정보 토글 ===');
+    
+    // 기존 상세 패널 제거
+    const existingPanel = document.getElementById('process-details-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+    }
+    
+    // 같은 커널을 다시 클릭한 경우 패널을 닫음
+    if (window.currentDetailKernelId === kernelId) {
+        window.currentDetailKernelId = null;
+        return;
+    }
+    
+    // 서버에서 커널 상태와 프로젝트 상태 가져오기
+    Promise.all([
+        fetch(`/api/kernels/${kernelId}/status`).then(response => response.json()),
+        fetch(`/api/kernels/${kernelId}/project-status`).then(response => response.json())
+    ])
+    .then(([statusData, projectData]) => {
+        if (statusData.success) {
+            const status = statusData.status;
+            const pid = kernelId.replace('process_kernel_', '');
+            const cmdline = status.cmdline ? status.cmdline.join(' ') : 'Unknown';
+            const username = status.username || 'Unknown';
+            
+            // 프로젝트 상태 확인
+            let projectStatusHtml = '';
+            if (projectData.success) {
+                if (projectData.is_project_kernel) {
+                    const projectInfo = projectData.project_info;
+                    projectStatusHtml = `
+                        <div style="margin-bottom: 0.5rem; padding: 0.3rem; background: #22543d; border-radius: 3px;">
+                            <strong style="color: #9ae6b4;">✅ 프로젝트 커널</strong>
+                            <div style="color: #9ae6b4; font-size: 0.7rem; margin-top: 0.2rem;">파일: ${projectInfo.file_name}</div>
+                        </div>
+                    `;
+                } else {
+                    projectStatusHtml = `
+                        <div style="margin-bottom: 0.5rem; padding: 0.3rem; background: #744210; border-radius: 3px;">
+                            <strong style="color: #fbd38d;">⚠️ 외부 프로세스</strong>
+                            <div style="color: #fbd38d; font-size: 0.7rem; margin-top: 0.2rem;">프로젝트에 추가되지 않음</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 상세 패널 생성
+            const panel = document.createElement('div');
+            panel.id = 'process-details-panel';
+            panel.style.cssText = `
+                position: absolute;
+                background: #2d3748;
+                border: 2px solid #4a5568;
+                border-radius: 8px;
+                padding: 1rem;
+                z-index: 1000;
+                max-width: 500px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                font-size: 0.8rem;
+            `;
+            
+            panel.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #4a5568; padding-bottom: 0.5rem;">
+                    <h4 style="margin: 0; color: #e2e8f0;">프로세스 상세 정보</h4>
+                    <button onclick="this.parentElement.parentElement.remove(); window.currentDetailKernelId = null;" style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; cursor: pointer; font-size: 0.7rem;">닫기</button>
+                </div>
+                ${projectStatusHtml}
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">PID:</strong> <span style="color: #a0aec0;">${pid}</span></div>
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">사용자:</strong> <span style="color: #a0aec0;">${username}</span></div>
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">CPU:</strong> <span style="color: #a0aec0;">${status.cpu_percent || 0}%</span></div>
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">메모리:</strong> <span style="color: #a0aec0;">${status.memory_percent || 0}%</span></div>
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">시작 시간:</strong> <span style="color: #a0aec0;">${status.create_time || 'Unknown'}</span></div>
+                <div style="margin-bottom: 0.5rem;"><strong style="color: #e2e8f0;">명령어:</strong></div>
+                <div style="background: #1a202c; padding: 0.5rem; border-radius: 4px; font-family: monospace; color: #a0aec0; word-break: break-all; white-space: pre-wrap; font-size: 0.7rem; margin-bottom: 1rem;">${cmdline}</div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button onclick="addProcessKernelToProject('${kernelId}')" style="background: #3182ce; color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.7rem;">프로젝트에 추가</button>
+                    <button onclick="terminateProcessKernel('${kernelId}')" style="background: #e53e3e; color: white; border: none; border-radius: 4px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.7rem;">종료</button>
+                </div>
+            `;
+                
+                // 상세 버튼 위치 찾기
+                const button = document.querySelector(`button[onclick="toggleProcessDetails('${kernelId}')"]`);
+                if (button) {
+                    const rect = button.getBoundingClientRect();
+                    panel.style.left = (rect.right + 10) + 'px';
+                    panel.style.top = rect.top + 'px';
+                }
+                
+                document.body.appendChild(panel);
+                window.currentDetailKernelId = kernelId;
+                
+                // 패널 외부 클릭 시 닫기
+                document.addEventListener('click', function closePanel(e) {
+                    if (!panel.contains(e.target) && !button.contains(e.target)) {
+                        panel.remove();
+                        window.currentDetailKernelId = null;
+                        document.removeEventListener('click', closePanel);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            // console.error('커널 상태 가져오기 오류:', error);
+        });
+}
+
+function terminateProcessKernel(kernelId) {
+    // console.log('=== 프로세스 커널 종료 ===');
+    // console.log('kernelId:', kernelId);
+    
+    if (!confirm('이 프로세스 커널을 종료하시겠습니까?')) {
+        return;
+    }
+    
+    // 서버에 프로세스 커널 종료 요청
+    fetch(`/api/kernels/${kernelId}/terminate-process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 상세 패널이 열려있고 종료된 커널의 것이라면 닫기
+            if (window.currentDetailKernelId === kernelId) {
+                const existingPanel = document.getElementById('process-details-panel');
+                if (existingPanel) {
+                    existingPanel.remove();
+                    window.currentDetailKernelId = null;
+                }
+            }
+            
+            // 성공 메시지
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #742a2a; color: #feb2b2; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+            successDiv.textContent = `프로세스 커널이 종료되었습니다: ${kernelId}`;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+            }, 3000);
+            
+                        // 커널 목록 새로고침
+            updateScannedKernelsList();
+        }
+    })
+    .catch(error => {
+        // console.error('프로세스 커널 종료 오류:', error);
+    });
+}
+
+function showProcessDetails(kernelId, pid, status, cmdline) {
+    // console.log('=== 프로세스 상세 정보 표시 ===');
+    
+    // 팝업 생성
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #2d3748;
+        border: 2px solid #4a5568;
+        border-radius: 8px;
+        padding: 1.5rem;
+        z-index: 10000;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    `;
+    
+    popup.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #4a5568; padding-bottom: 0.5rem;">
+            <h3 style="margin: 0; color: #e2e8f0;">프로세스 상세 정보</h3>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.8rem;">닫기</button>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #e2e8f0;">커널 ID:</strong>
+            <span style="color: #a0aec0; margin-left: 0.5rem;">${kernelId}</span>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #e2e8f0;">프로세스 ID:</strong>
+            <span style="color: #a0aec0; margin-left: 0.5rem;">${pid}</span>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #e2e8f0;">상태:</strong>
+            <span style="color: ${status === '실행 중' ? '#68d391' : '#e53e3e'}; margin-left: 0.5rem;">${status}</span>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #e2e8f0;">명령어:</strong>
+            <div style="background: #1a202c; padding: 0.5rem; border-radius: 4px; margin-top: 0.3rem; font-family: monospace; font-size: 0.8rem; color: #a0aec0; word-break: break-all; white-space: pre-wrap;">${cmdline}</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button onclick="addProcessKernelToProjectFromPopup('${kernelId}', this)" style="background: #3182ce; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer;">프로젝트에 추가</button>
+        </div>
+    `;
+    
+    // 배경 오버레이 추가
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+    `;
+    overlay.onclick = () => {
+        overlay.remove();
+        popup.remove();
+    };
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+}
+
+function addProcessKernelToProjectFromPopup(kernelId, buttonElement) {
+    // console.log('=== 팝업에서 프로세스 커널을 프로젝트에 추가 ===');
+    
+    // 사용자에게 파일명 입력받기
+    const fileName = prompt('이 프로세스 커널을 연결할 파일명을 입력하세요 (예: process_script.py):');
+    if (!fileName) {
+        return;
+    }
+    
+    // 파일 경로 생성 (현재 디렉토리 기준)
+    const filePath = fileName;
+    
+    // 서버에 프로세스 커널 추가 요청
+    fetch('/api/kernels/add-process-to-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            file_path: filePath,
+            kernel_id: kernelId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 프로세스 커널을 프로젝트 커널로 추가
+            fileKernels[filePath] = kernelId;
+            
+            // UI 업데이트
+            updateKernelInfo();
+            
+            // 팝업 닫기
+            const popup = buttonElement.closest('div[style*="position: fixed"]');
+            const overlay = document.querySelector('div[style*="background: rgba(0,0,0,0.5)"]');
+            if (popup) popup.remove();
+            if (overlay) overlay.remove();
+            
+            // 성공 메시지
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #22543d; color: #9ae6b4; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+            successDiv.textContent = `프로세스 커널이 프로젝트에 추가되었습니다: ${fileName}`;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+            }, 3000);
+        }
+    })
+    .catch(error => {
+        // console.error('프로세스 커널 추가 오류:', error);
+    });
+}
+
+function addProcessKernelToProject(kernelId) {
+    // 사용자에게 파일명 입력받기
+    const fileName = prompt('이 프로세스 커널을 연결할 파일명을 입력하세요 (예: process_script.py):');
+    if (!fileName) {
+        return;
+    }
+    
+    // 파일 경로 생성 (현재 디렉토리 기준)
+    const filePath = fileName;
+    
+    // 서버에 프로세스 커널 추가 요청
+    fetch('/api/kernels/add-process-to-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            file_path: filePath,
+            kernel_id: kernelId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // UI 업데이트 (서버에서 매핑 데이터를 다시 가져와서 표시)
+            updateKernelList();
+            
+            // 성공 메시지
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #22543d; color: #9ae6b4; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+            successDiv.textContent = `프로세스 커널이 프로젝트에 추가되었습니다: ${fileName}`;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+            }, 3000);
+        }
+    })
+    .catch(error => {
+        // console.error('프로세스 커널 추가 오류:', error);
+    });
+}
+function shutdownKernelForFile(filePath) {
+    // 파일 경로로 커널 ID를 찾기 위해 서버에 요청
+    fetch(`/api/kernels/file-mapping?file_path=${encodeURIComponent(filePath)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.kernel_id) {
+                const kernelId = data.kernel_id;
+                
+                if (!confirm(`"${filePath.split('/').pop()}" 파일의 커널을 종료하시겠습니까?`)) {
+                    return;
+                }
+                
+                fetch(`/api/kernels/${kernelId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 상세 패널이 열려있고 종료된 커널의 것이라면 닫기
+                        if (window.currentDetailKernelId === kernelId) {
+                            const existingPanel = document.getElementById('process-details-panel');
+                            if (existingPanel) {
+                                existingPanel.remove();
+                                window.currentDetailKernelId = null;
+                            }
+                        }
+                        
+                        const successDiv = document.createElement('div');
+                        successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #742a2a; color: #feb2b2; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+                        successDiv.textContent = `커널이 종료되었습니다: ${filePath.split('/').pop()}`;
+                        document.body.appendChild(successDiv);
+                        setTimeout(() => {
+                            successDiv.style.animation = 'slideOut 0.3s ease';
+                            setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+                        }, 3000);
+                        
+                        // UI 업데이트 (서버에서 매핑 데이터를 다시 가져와서 표시)
+                        updateKernelList();
+                    }
+                })
+                .catch(error => {
+                    // console.error('커널 종료 오류:', error);
+                });
+            }
+        })
+        .catch(error => {
+            // console.error('파일-커널 매핑 확인 오류:', error);
+        });
+}
+function cleanupInactiveKernels() {
+    if (!confirm('12시간 이상 비활성인 커널들을 정리하시겠습니까?')) {
+        return;
+    }
+    fetch('/api/kernels/cleanup-inactive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #22543d; color: #9ae6b4; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+            successDiv.textContent = data.message;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+            }, 3000);
+            updateKernelInfo();
+        }
+    })
+    .catch(error => {
+        // console.error('비활성 커널 정리 실패:', error);
+    });
+}
+function cleanupAllKernels() {
+    if (!confirm('모든 커널을 정리하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    fetch('/api/kernels/cleanup-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 모든 커널이 정리되므로 상세 패널도 닫기
+            const existingPanel = document.getElementById('process-details-panel');
+            if (existingPanel) {
+                existingPanel.remove();
+                window.currentDetailKernelId = null;
+            }
+            
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #742a2a; color: #feb2b2; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; animation: slideIn 0.3s ease;`;
+            successDiv.textContent = data.message;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => { if (successDiv.parentNode) { successDiv.parentNode.removeChild(successDiv); } }, 300);
+            }, 3000);
+            fileKernels = {};
+            updateKernelInfo();
+            if (activeFile) {
+                document.getElementById('currentKernelInfo').textContent = '없음';
+                document.getElementById('kernelStatusText').textContent = '커널 없음';
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 비활성';
+                    displayElement.style.color = '#a0aec0';
+                }
+            }
+        }
+    })
+    .catch(error => {
+        // console.error('모든 커널 정리 실패:', error);
+    });
+}
+
+// 새로운 함수: 서버에서 직접 커널 목록 가져와서 보여주기
+function updateKernelList() {
+    // 일반 커널 목록만 가져오기 (파일-커널 매핑 기반)
+    fetch('/api/kernels/file-mappings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const projectKernelsList = document.getElementById('projectKernelsList');
+                const kernelEntries = Object.entries(data.mappings || {});
+                
+                if (kernelEntries.length > 0) {
+                    projectKernelsList.innerHTML = kernelEntries.map(([filePath, kernelId]) => {
+                        const fileName = filePath.split('/').pop();
+                        return `<div style="margin-bottom: 0.3rem; padding: 0.3rem; background: #4a5568; border-radius: 4px; border-left: 3px solid #718096;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <span style="color: #e2e8f0; font-weight: bold; font-size: 0.85rem;">${fileName}</span>
+                                    <span style="color: #a0aec0; font-size: 0.65rem; margin-left: 0.5rem;">${kernelId}</span>
+                                </div>
+                                <button onclick="shutdownKernelById('${kernelId}')" style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.65rem; cursor: pointer;">종료</button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    projectKernelsList.innerHTML = '없음';
+                }
+            } else {
+                document.getElementById('projectKernelsList').innerHTML = '커널 목록을 가져올 수 없습니다.';
+            }
+        })
+        .catch(error => {
+            document.getElementById('projectKernelsList').innerHTML = '커널 목록을 가져올 수 없습니다.';
+        });
+}
+
+
+</script> 

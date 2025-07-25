@@ -1,0 +1,10 @@
+{
+  "worker": {
+    "name": "HK_wind_finder",
+    "url": "https://www.windfinder.com/forecast/tangjin_chungcheongnam_do_koreasouth",
+    "type": "selenium",
+    "default_sleep": 0.1,
+    "default_interval": 0.1,
+    "jobs": []
+  }
+}

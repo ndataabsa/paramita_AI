@@ -1,0 +1,68 @@
+{
+  "worker": {
+    "name": "test woker",
+    "url": "https://naver.com",
+    "type": "selenium",
+    "default_sleep": 0.1,
+    "default_interval": 0.1,
+    "jobs": [
+      {
+        "name": "get_google",
+        "params": {
+          "request_type": "get",
+          "url": "wind url"
+        },
+        "type": "request"
+      },
+      {
+        "name": "새 Job",
+        "params": {
+          "script_path": "",
+          "to": "",
+          "arg_count": 0
+        },
+        "type": "python"
+      },
+      {
+        "name": "새 Job",
+        "type": "save",
+        "params": {
+          "save_type": "mysql",
+          "to": "",
+          "name": "",
+          "encoding": "utf-8"
+        }
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "name": "테스트 get",
+      "params": {
+        "request_type": "get",
+        "url": "http://google.com"
+      },
+      "type": "request"
+    },
+    {
+      "name": "테스트 리스트 생성",
+      "params": {
+        "script_path": "",
+        "to": "",
+        "arg_count": 0,
+        "python_type": "code"
+      },
+      "type": "python"
+    },
+    {
+      "name": "테스트 딕셔너리 생성",
+      "params": {
+        "key_value_pairs": "이름:홍길동,나이:30,도시:서울,직업:개발자",
+        "name": "test_dict",
+        "print_result": true,
+        "test_type": "dict"
+      },
+      "type": "test"
+    }
+  ]
+}

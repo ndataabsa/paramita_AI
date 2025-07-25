@@ -1,0 +1,4404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NP Notebook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notebook.css', v='2.7') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #222;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #1a202c;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* 주피터 노트북 스타일 레이아웃 */
+        .jupyter-layout {
+            display: flex;
+            height: calc(100vh - 140px);
+            margin-top: 10px;
+        }
+
+        .file-browser-sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .sidebar-tabs {
+            width: 40px;
+            background: #f5f6fa;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-tab {
+            width: 100%;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+        }
+
+        .sidebar-tab.active {
+            color: #222;
+            background: #fff;
+            border-right: 3px solid #999;
+        }
+
+        .sidebar-tab:hover {
+            color: #222;
+            background: #fff;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-panel {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .sidebar-panel.active {
+            display: flex;
+        }
+
+        .notebook-main {
+            flex: 1;
+            background: #fff;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .file-browser-header {
+            background: #fff;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .file-browser-header h3 {
+            margin: 0 0 0.5rem 0;
+            color: #222;
+            font-size: 1rem;
+        }
+
+        .file-browser-controls {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-browser-controls .btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background: #fff;
+            color: #222;
+        }
+
+        .search-box::placeholder {
+            color: #999;
+        }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            max-height: calc(100vh - 280px);
+        }
+        .file-tree {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .file-item {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .file-row {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        .file-info {
+            display: flex !important;
+            align-items: center !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+        }
+        .file-actions {
+            display: flex !important;
+            align-items: center !important;
+            color: #111 !important;
+        }
+        .file-action-btn {
+            color: #111 !important;
+        }
+
+        /* depth에 따른 들여쓰기 */
+        .file-item[data-depth="1"] { padding-left: 2rem !important; }
+        .file-item[data-depth="2"] { padding-left: 3rem !important; }
+        .file-item[data-depth="3"] { padding-left: 4rem !important; }
+        .file-item[data-depth="4"] { padding-left: 5rem !important; }
+        
+        /* 셀 출력 스타일 */
+        .cell-output-running {
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+        
+        .cell-output-new {
+            background: #d4edda;
+            border-left: 3px solid #28a745;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            color: #155724;
+        }
+        .file-item[data-depth="5"] { padding-left: 6rem !important; }
+
+        .file-item.selected {
+            background: #f8f9fa !important;
+            border-left: 3px solid #999 !important;
+        }
+
+        .file-name {
+            flex: 1 !important;
+            margin-left: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            min-width: 0 !important;
+            font-size: 0.85rem !important;
+        }
+
+        .folder-toggle {
+            cursor: pointer !important;
+            color: #666 !important;
+            font-size: 0.8rem !important;
+            margin-right: 0.3rem !important;
+            user-select: none !important;
+            flex-shrink: 0 !important;
+        }
+
+        .folder-children {
+            display: none !important;
+            flex-direction: column !important;
+            width: 100% !important;
+        }
+
+        .folder-children.expanded {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        .file-icon::before {
+            margin-right: 0 !important;
+        }
+
+        .folder-item .file-icon::before {
+            content: "" !important;
+        }
+
+        .file-item:not(.folder-item) .file-icon::before {
+            content: "" !important;
+        }
+
+        .file-action-btn {
+            background: none !important;
+            border: none !important;
+            cursor: pointer !important;
+            padding: 0.2rem !important;
+            border-radius: 3px !important;
+            color: #666 !important;
+            flex-shrink: 0 !important;
+        }
+
+        /* 노트북 셀 스타일 */
+        .notebook-toolbar {
+            background: #4a5568;
+            border: 1px solid #718096;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* 셀 스타일은 CSS 파일에서 관리 */
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* 셀 상태 스타일은 CSS 파일에서 관리 */
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        /* 로딩 및 에러 상태 */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error-message {
+            color: #dc3545;
+            padding: 1rem;
+            background: #f8d7da;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            color: #155724;
+            padding: 1rem;
+            background: #d4edda;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .empty-content {
+            text-align: center;
+            padding: 2rem;
+            color: #aaa;
+        }
+
+        .empty-content div {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .current-file-info {
+            background: #f5f6fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #222;
+        }
+
+        .current-file-info span {
+            font-weight: 600;
+            color: #63b3ed;
+        }
+
+        .file-tabs {
+            display: flex;
+            align-items: center;
+            background: #f5f6fa;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 48px;
+            padding-left: 1rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #718096 #1a202c;
+        }
+
+        .file-tabs::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .file-tabs::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+
+        .file-tabs::-webkit-scrollbar-thumb {
+            background: #718096;
+            border-radius: 3px;
+        }
+
+        .file-tabs::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        .file-tabs-container {
+            display: flex;
+            align-items: center;
+            min-width: max-content;
+            padding-right: 1rem;
+        }
+        .file-tab {
+            display: flex;
+            align-items: center;
+            background: #f5f6fa;
+            color: #222;
+            border: 1px solid #e0e0e0;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            margin-right: 0.5rem;
+            padding: 0.5rem 1.2rem 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            position: relative;
+            transition: background 0.2s, color 0.2s;
+        }
+        .file-tab.active {
+            background: #fff;
+            color: #222;
+            border-color: #ddd;
+        }
+        .file-tab .close-btn {
+            margin-left: 0.7rem;
+            color: #666;
+            font-size: 1.1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 0.2rem;
+            border-radius: 3px;
+        }
+        .file-tab .close-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        /* crawl 셀 스타일 */
+        .crawl-cell-content {
+            padding: 0.5rem;
+        }
+
+        .crawl-controls {
+            margin-bottom: 1rem;
+        }
+
+        .crawl-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .crawl-row label {
+            min-width: 100px;
+            font-weight: 500;
+            color: #222;
+            font-size: 0.8rem;
+        }
+
+        .crawl-row select,
+        .crawl-row input {
+            flex: 1;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            color: #000;
+            font-size: 0.8rem;
+            min-height: 35px;
+            transition: all 0.2s ease;
+        }
+
+        .crawl-row select:focus,
+        .crawl-row input:focus {
+            outline: none;
+            border-color: #999;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+
+        .crawl-row select:hover,
+        .crawl-row input:hover {
+            border-color: #999;
+            background: #fff;
+        }
+
+        .crawl-params {
+            margin-top: 1.5rem;
+        }
+
+        .crawl-param-field {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .crawl-param-field label {
+            min-width: 120px;
+            font-weight: 500;
+            color: #222;
+            font-size: 0.8rem;
+        }
+
+        .crawl-param-field input,
+        .crawl-param-field select {
+            flex: 1;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            color: #000;
+            font-size: 0.8rem;
+            min-height: 35px;
+            transition: all 0.2s ease;
+        }
+
+        .crawl-param-field input:focus,
+        .crawl-param-field select:focus {
+            outline: none;
+            border-color: #999;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+
+        .crawl-param-field input:hover,
+        .crawl-param-field select:hover {
+            border-color: #999;
+            background: #fff;
+        }
+
+        /* JSON 출력 관련 스타일 */
+        .xml-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .xml-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* 토글 스위치 스타일 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ddd;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #fff;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #666;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: white;
+        }
+
+        /* JSON 출력 섹션 */
+        .xml-output-section {
+            margin-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 1rem;
+        }
+
+        .xml-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .xml-header h4 {
+            margin: 0;
+            color: #222;
+            font-size: 0.9rem;
+        }
+
+        .xml-copy-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            color: #e2e8f0;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .xml-copy-btn:hover {
+            background: #63b3ed;
+            border-color: #63b3ed;
+        }
+
+        .xml-output-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.8rem;
+            border: 1px solid #718096;
+            border-radius: 4px;
+            background: #1a202c;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            resize: vertical;
+        }
+
+        .xml-output-textarea:focus {
+            outline: none;
+            border-color: #63b3ed;
+            box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.2);
+        }
+
+        /* Crawl 셀 특별 스타일 */
+        .crawl-cell-content {
+            padding: 1rem;
+        }
+
+        .crawl-controls {
+            margin-bottom: 1rem;
+        }
+
+        .crawl-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            gap: 0.8rem;
+        }
+
+        .crawl-row label {
+            min-width: 80px;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .crawl-row select,
+        .crawl-row input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            color: #000;
+        }
+
+        .crawl-params {
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .jupyter-layout {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .file-browser-sidebar {
+                width: 100%;
+                height: 300px;
+            }
+        }
+
+        .crawl-row select,
+        .crawl-row input,
+        .crawl-param-field input,
+        .crawl-param-field select {
+            flex: 1;
+            padding: 0.4rem 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            color: #000;
+            font-size: 0.8rem;
+            min-height: 32px;
+            transition: all 0.2s ease;
+        }
+
+        .crawl-row label,
+        .crawl-param-field label {
+            font-size: 0.92rem;
+            min-width: 90px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📓 NP Notebook</h1>
+        <div class="nav-links">
+            <a href="/?file={{ selected_file }}" class="nav-link">홈</a>
+            <a href="/worker?file={{ selected_file }}" class="nav-link">Worker</a>
+            <a href="/jobs?file={{ selected_file }}" class="nav-link">Jobs</a>
+            <a href="/kernel" class="nav-link">커널</a>
+        </div>
+    </div>
+
+    <!-- 파일별 탭 바 -->
+    <div class="file-tabs" id="fileTabs">
+        <div class="file-tabs-container"></div>
+    </div>
+
+    <div class="jupyter-layout">
+        <!-- 파일 브라우저 사이드바 -->
+        <div class="file-browser-sidebar">
+            <div class="sidebar-tabs">
+                <div class="sidebar-tab active" onclick="switchSidebarTab('fileTreePanel')" title="파일 탐색기">📁</div>
+                <div class="sidebar-tab" onclick="switchSidebarTab('kernelPanel')" title="커널">🧠</div>
+            </div>
+            <div class="sidebar-content">
+                <div id="fileTreePanel" class="sidebar-panel active">
+                    <div class="file-browser-header">
+        
+                        <div class="file-browser-controls">
+                            <button class="btn btn-primary" onclick="refreshFileTree()">새로고침</button>
+                            <button class="btn btn-success" onclick="createNewFile()">새 파일</button>
+                            <button class="btn btn-secondary" onclick="uploadFile()">업로드</button>
+                        </div>
+                        <input type="text" class="search-box" placeholder="파일 검색..." onkeyup="filterFiles(this.value)">
+                    </div>
+                    <div class="file-tree" id="fileTree">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            파일 목록을 불러오는 중...
+                        </div>
+                    </div>
+                </div>
+                <div id="kernelPanel" class="sidebar-panel">
+                    <div class="file-browser-header">
+                        <h3 style="color: #000000;">🧠 커널 관리</h3>
+                    </div>
+                    <div style="padding: 1rem; color: #000000; font-size: 0.9rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong>현재 활성 커널:</strong><br>
+                            <span id="currentKernelInfo">없음</span>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong>활성 커널 상태:</strong><br>
+                            <span id="kernelStatusText">준비됨</span>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong>열린 파일:</strong><br>
+                            <div id="openFilesList" style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                없음
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <strong>모든 커널 목록:</strong><br>
+                            <div id="allKernelsList" style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                없음
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #718096;">
+                            <strong>커널 정리:</strong><br>
+                            <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button class="btn btn-warning" onclick="cleanupInactiveKernels()" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                                    🧹 비활성 커널 정리
+                                </button>
+                                <button class="btn btn-danger" onclick="cleanupAllKernels()" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                                    💥 모든 커널 정리
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 노트북 메인 영역 -->
+        <div class="notebook-main">
+            <!-- 현재 파일 정보 및 저장 버튼 -->
+            <div id="currentFileInfo" style="display: none;" class="current-file-info">
+                <span id="currentFileName"></span>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span id="kernelStatusDisplay" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; background: #4a5568; border-radius: 4px; color: #000000;">
+                        커널 상태: 비활성
+                    </span>
+                    <button class="btn btn-primary" onclick="initializeKernel()" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                        🔄 커널 초기화
+                    </button>
+                    <button class="btn btn-danger" onclick="shutdownKernel()" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                        ⏹️ 커널 종료
+                    </button>
+                    <button class="btn btn-secondary" onclick="saveNotebookToFile()" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                        💾 노트북 저장
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 노트북 셀들 -->
+            <div id="notebookCells"></div>
+            
+            <!-- 하단 빈 공간 (스크롤을 위한 여백) -->
+            <div style="height: 200px; padding: 20px; text-align: center; color: #a0aec0; font-size: 0.9rem;">
+                <div style="margin-top: 50px;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📝</div>
+                    <div>노트북 끝</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.7;">더 많은 셀을 추가하려면 위의 ➕ 버튼을 사용하세요</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <span>📓 NP Notebook v1.0</span>
+            </div>
+            <div class="footer-right">
+                <span id="footer-status">준비됨</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 컨텍스트 메뉴 -->
+    <div class="context-menu" id="contextMenu" style="display: none;">
+        <div class="context-menu-item" onclick="openFile()">열기</div>
+        <div class="context-menu-item" onclick="renameFile()">이름 변경</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="copyFilePath()">경로 복사</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="deleteFile()" style="color: #dc3545;">삭제</div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/screenshot-monitor.js') }}"></script>
+
+    <script>
+        let currentFile = null;
+        let fileTreeData = [];
+        let selectedFileItem = null;
+        let cellCounter = 0;
+        let cells = [];
+        let openFiles = [];
+        let fileCells = {}; // { filePath: [cell, ...] }
+        let fileKernels = {}; // { filePath: kernelId }
+        let activeFile = null;
+
+        // 셀 실행 큐 시스템
+        let cellExecutionQueue = []; // 실행 대기 중인 셀들
+        let isExecuting = false; // 현재 실행 중인지 여부
+        let currentExecutingCell = null; // 현재 실행 중인 셀 ID
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFileTree();
+            setupEventListeners();
+            loadJobTypes();
+            
+            // 새로고침 시 커널 상태 복원
+            restoreKernelState();
+            
+            // 파일이 선택되지 않은 상태에서 기본 셀 추가
+            if (!activeFile) {
+                addCell(); // 첫 번째 셀 추가
+            }
+            // checkKernelStatus(); // 세션 커널 상태 확인 제거
+        });
+        
+        // Job Types 로드
+        async function loadJobTypes() {
+            try {
+                const response = await fetch('/api/job_types');
+                const data = await response.json();
+                window.jobTypes = data.job_types;
+                window.focusTypes = data.focus_types;
+                console.log('Job Types loaded:', window.jobTypes);
+            } catch (error) {
+                console.error('Failed to load job types:', error);
+            }
+        }
+
+        // 기존 파일 브라우저 함수들...
+        function setupEventListeners() {
+            // 컨텍스트 메뉴 숨기기
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.context-menu')) {
+                    hideContextMenu();
+                }
+            });
+
+            // ESC 키로 컨텍스트 메뉴 숨기기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideContextMenu();
+                }
+            });
+
+        }
+
+        // 서버에서 활성 커널 목록 가져오기
+        function restoreKernelState() {
+            // 서버에서 현재 활성 커널 목록을 가져와서 표시
+            fetch('/api/kernels')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.kernels) {
+                        console.log('서버에서 커널 목록 가져옴:', data.kernels);
+                        
+                        // 서버의 커널 목록을 표시 (선택사항)
+                        // 여기서는 단순히 로그만 출력
+                        Object.keys(data.kernels).forEach(kernelId => {
+                            console.log(`활성 커널: ${kernelId} - 상태: ${data.kernels[kernelId].status}`);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('커널 목록 가져오기 실패:', error);
+                });
+        }
+
+        function loadFileTree() {
+            fetch('/api/files')
+                .then(response => response.json())
+                .then(data => {
+                    fileTreeData = data.files || [];
+                    renderFileTree(fileTreeData);
+                })
+                .catch(error => {
+                    console.error('파일 목록 로드 실패:', error);
+                    document.getElementById('fileTree').innerHTML = 
+                        '<div class="error-message">파일 목록을 불러올 수 없습니다.</div>';
+                });
+        }
+
+        function renderFileTree(files) {
+            const fileTree = document.getElementById('fileTree');
+            fileTree.innerHTML = '';
+            if (!files || files.length === 0) {
+                fileTree.innerHTML = '<div class="empty-content"><p>파일이 없습니다</p></div>';
+                return;
+            }
+            files.forEach(file => {
+                const fileItem = createFileItemRecursive(file, 0);
+                fileTree.appendChild(fileItem);
+            });
+        }
+
+        function createFileItemRecursive(file, depth = 0) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.setAttribute('data-path', file.path);
+            fileItem.setAttribute('data-type', file.type);
+            fileItem.setAttribute('data-depth', depth);
+
+            // 폴더/파일 아이콘
+            let folderIcon = '';
+            if (file.type === 'directory') {
+                folderIcon = '<span class="folder-toggle" style="user-select:none;cursor:pointer;">▶</span>';
+            }
+
+            fileItem.innerHTML = `
+                <div class="file-row">
+                    <div class="file-info">
+                        ${folderIcon}
+                        <span class="file-icon"></span>
+                        <span class="file-name">${file.name}</span>
+                    </div>
+                    <div class="file-actions">
+                        <button class="file-action-btn" onclick="event.stopPropagation(); showContextMenu(event, '${file.path}')">⋮</button>
+                    </div>
+                </div>
+            `;
+
+            // 폴더 클릭 시 children 토글
+            if (file.type === 'directory') {
+                fileItem.addEventListener('click', function(e) {
+                    e.stopPropagation(); // 이벤트 전파 중단
+                    if (e.target.classList.contains('folder-toggle')) {
+                        const childrenContainer = fileItem.querySelector('.folder-children');
+                        const toggle = fileItem.querySelector('.folder-toggle');
+                        if (childrenContainer) {
+                            const isOpen = childrenContainer.classList.contains('expanded');
+                            if (isOpen) {
+                                childrenContainer.classList.remove('expanded');
+                                toggle.textContent = '▶';
+                            } else {
+                                childrenContainer.classList.add('expanded');
+                                toggle.textContent = '▼';
+                            }
+                        }
+                    }
+                });
+            } else {
+                fileItem.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 이벤트 전파 중단
+                    selectFile(file);
+                });
+            }
+
+            fileItem.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showContextMenu(e, file.path);
+            });
+
+            // children이 있으면 재귀적으로 렌더링, 기본은 닫힘
+            if (file.type === 'directory' && file.children && file.children.length > 0) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'folder-children';
+                file.children.forEach(child => {
+                    const childItem = createFileItemRecursive(child, depth + 1);
+                    childrenContainer.appendChild(childItem);
+                });
+                fileItem.appendChild(childrenContainer);
+            }
+
+            return fileItem;
+        }
+
+        // 파일 브라우저에서 파일 클릭 시
+        function selectFile(file) {
+            // 이미지 파일인지 확인
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            
+            if (imageExtensions.includes(fileExtension)) {
+                // 이미지 파일인 경우 모달에서 이미지 보여주기
+                showImageModal(file);
+                return;
+            }
+            
+            // 탭이 이미 열려 있으면 해당 탭으로 전환
+            if (openFiles.includes(file.path)) {
+                setActiveFileTab(file.path);
+                return;
+            }
+            // 탭 추가
+            openFiles.push(file.path);
+            renderFileTabs();
+            setActiveFileTab(file.path);
+            
+            // 파일별 새로운 커널 생성 제거 - 수동으로 초기화하도록 변경
+            // const fileName = file.name.toLowerCase();
+            // if (fileName.endsWith('.py') || fileName.endsWith('.ipynb') || fileName.endsWith('.npn')) {
+            //     createKernelForFile(file.path);
+            // }
+            
+            // 파일 내용 로드 및 셀 생성
+            fetch(`/api/files/content?path=${encodeURIComponent(file.path)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('파일 로드 실패:', data.message);
+                        return;
+                    }
+                    
+                    let cells = [];
+                    
+                    if (!data.content) {
+                        cells.push({ content: '', output: '', status: 'idle', id: null });
+                        fileCells[file.path] = cells;
+                        renderNotebookCells();
+                        return;
+                    }
+                    
+                    // ipynb/npn 파일 처리
+                    if (file.name.endsWith('.ipynb') || file.name.endsWith('.npn')) {
+                        try {
+                            const notebook = JSON.parse(data.content);
+                            if (notebook.cells && Array.isArray(notebook.cells)) {
+                                notebook.cells.forEach(cell => {
+                                    let content = '';
+                                    let cellType = cell.cell_type;
+                                    
+                                    if (cell.cell_type === 'code') {
+                                        const source = cell.source || '';
+                                        content = Array.isArray(source) ? source.join('') : source;
+                                    } else if (cell.cell_type === 'markdown') {
+                                        const source = cell.source || '';
+                                        content = `# ${Array.isArray(source) ? source.join('') : source}`;
+                                    } else if (cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json') {
+                                        const source = cell.source || '';
+                                        
+                                        if (Array.isArray(source)) {
+                                            content = source.join('');
+                                        } else if (typeof source === 'object' && source !== null) {
+                                            content = JSON.stringify(source, null, 2);
+                                        } else {
+                                            content = source;
+                                        }
+                                    }
+                                    
+                                    const cellData = {
+                                        content: content, 
+                                        output: '', 
+                                        status: 'idle', 
+                                        id: null,
+                                        cell_type: cellType
+                                    };
+                                    
+                                    // ipynb 표준 outputs를 output_history로 변환
+                                    if (cell.outputs && Array.isArray(cell.outputs)) {
+                                        cellData.output_history = cell.outputs.map(output => ({
+                                            timestamp: new Date().toISOString(),
+                                            output: output.text || output.data || '',
+                                            execution_count: cell.execution_count || 1
+                                        }));
+                                    } else if (cell.output_history) {
+                                        cellData.output_history = cell.output_history;
+                                    }
+                                    
+                                    cells.push(cellData);
+                                });
+                            } else {
+                                cells.push({ content: data.content, output: '', status: 'idle', id: null });
+                            }
+                        } catch (e) {
+                            cells.push({ content: data.content, output: '', status: 'idle', id: null });
+                        }
+                    } else {
+                        // 일반 파일
+                        cells.push({ content: data.content, output: '', status: 'idle', id: null });
+                    }
+                    
+                    fileCells[file.path] = cells;
+                    
+                    // crawl 셀들에 자동 번호 부여
+                    cells.forEach((cell, index) => {
+                        if ((cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json') && (!cell.name || cell.name === '')) {
+                            cell.name = `Crawl_${index + 1}`;
+                        }
+                    });
+                    
+                    renderNotebookCells();
+                    // 빈 파일(0개 셀)일 때 자동으로 셀 추가
+                    if (fileCells[file.path] && fileCells[file.path].length === 0) {
+                        activeFile = file.path;
+                        addCell();
+                    }
+                });
+        }
+
+        // 파일별 커널 생성
+        function createKernelForFile(filePath) {
+            console.log(`커널 생성 시작: ${filePath}`);
+            
+            // 파일 타입 체크
+            const fileName = filePath.split('/').pop().toLowerCase();
+            if (!fileName.endsWith('.py') && !fileName.endsWith('.ipynb') && !fileName.endsWith('.npn')) {
+                console.log(`커널 생성 건너뜀: ${filePath} (Python, ipynb, npn 파일이 아님)`);
+                return;
+            }
+            
+            fetch('/api/kernels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}) // 빈 JSON 객체 추가
+            })
+            .then(response => {
+                console.log('커널 생성 응답 상태:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('커널 생성 응답 데이터:', data);
+                if (data.success) {
+                    fileKernels[filePath] = data.kernel_id;
+                    console.log(`커널 생성 성공: ${filePath} -> ${data.kernel_id}`);
+                    updateKernelInfo();
+                    // 커널 생성 후 상태 확인
+                    setTimeout(() => checkKernelStatus(), 1000);
+                } else {
+                    console.error('커널 생성 실패:', data.error || data.message);
+                    alert(`커널 생성 실패: ${data.error || data.message || '알 수 없는 오류'}`);
+                }
+            })
+            .catch(error => {
+                console.error('커널 생성 오류:', error);
+                alert(`커널 생성에 실패했습니다: ${error.message}`);
+            });
+        }
+
+        function renderFileTabs() {
+            const fileTabs = document.getElementById('fileTabs');
+            const fileTabsContainer = fileTabs.querySelector('.file-tabs-container');
+            fileTabsContainer.innerHTML = '';
+            openFiles.forEach(path => {
+                const tab = document.createElement('div');
+                tab.className = 'file-tab' + (activeFile === path ? ' active' : '');
+                
+                // 파일명 표시
+                const fileName = path.split('/').pop();
+                const hasKernel = fileKernels[path];
+                const kernelIcon = hasKernel ? '🧠' : '⚪';
+                tab.innerHTML = `<span>${kernelIcon} ${fileName}</span>`;
+                
+                tab.onclick = () => setActiveFileTab(path);
+                // 닫기 버튼
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'close-btn';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeFileTab(path);
+                };
+                tab.appendChild(closeBtn);
+                fileTabsContainer.appendChild(tab);
+            });
+        }
+
+        function setActiveFileTab(path) {
+            activeFile = path;
+            renderFileTabs();
+            renderNotebookCells();
+            // 파일명 및 저장 버튼 표시
+            document.getElementById('currentFileInfo').style.display = 'flex';
+            const fileName = path.split('/').pop();
+            const hasKernel = fileKernels[path];
+            const kernelId = hasKernel ? fileKernels[path] : '없음';
+            document.getElementById('currentFileName').textContent = fileName;
+            
+            // 커널 초기화 버튼 텍스트 업데이트
+            const initButton = document.querySelector('#currentFileInfo .btn-primary');
+            if (initButton) {
+                initButton.innerHTML = hasKernel ? '🔄 커널 재시작' : '🔄 커널 초기화';
+            }
+            
+            // 셀이 없으면 기본 셀 추가
+            if (!fileCells[path] || fileCells[path].length === 0) {
+                addCell();
+            }
+            
+            // 커널 정보 업데이트
+            updateKernelInfo();
+            // 커널 상태 확인
+            setTimeout(() => checkKernelStatus(), 500);
+        }
+
+        function closeFileTab(path) {
+            const idx = openFiles.indexOf(path);
+            if (idx !== -1) {
+                openFiles.splice(idx, 1);
+                delete fileCells[path];
+                
+                // 해당 파일의 커널 종료
+                if (fileKernels[path]) {
+                    shutdownKernelForFile(path);
+                }
+                delete fileKernels[path];
+                
+                // 탭 닫은 후 다른 탭으로 전환
+                if (openFiles.length > 0) {
+                    setActiveFileTab(openFiles[Math.max(0, idx - 1)]);
+                } else {
+                    activeFile = null;
+                    renderFileTabs();
+                    document.getElementById('notebookCells').innerHTML = '';
+                    document.getElementById('currentFileInfo').style.display = 'none';
+                }
+            }
+        }
+
+        // 파일별 커널 종료
+        function shutdownKernelForFile(filePath) {
+            const kernelId = fileKernels[filePath];
+            if (!kernelId) return;
+            
+            if (!confirm(`"${filePath.split('/').pop()}" 파일의 커널을 종료하시겠습니까?`)) {
+                return;
+            }
+            
+            fetch(`/api/kernels/${kernelId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`커널 종료됨: ${filePath} -> ${kernelId}`);
+                    
+                    // 성공 메시지 표시
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #742a2a;
+                        color: #feb2b2;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    successDiv.textContent = `커널이 종료되었습니다: ${filePath.split('/').pop()}`;
+                    document.body.appendChild(successDiv);
+                    
+                    // 3초 후 자동 제거
+                    setTimeout(() => {
+                        successDiv.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }, 3000);
+                    
+                    // 커널 ID 제거
+                    delete fileKernels[filePath];
+                    
+                    // UI 업데이트
+                    updateKernelInfo();
+                    
+                    // 만약 종료된 커널이 현재 활성 파일의 커널이었다면
+                    if (filePath === activeFile) {
+                        document.getElementById('currentKernelInfo').textContent = '없음';
+                        document.getElementById('kernelStatusText').textContent = '커널 없음';
+                    }
+                } else {
+                    alert(data.message || '커널 종료에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('커널 종료 오류:', error);
+                alert('커널 종료에 실패했습니다.');
+            });
+        }
+
+        function renderNotebookCells() {
+            const notebookCells = document.getElementById('notebookCells');
+            notebookCells.innerHTML = '';
+            if (!activeFile || !fileCells[activeFile]) return;
+            fileCells[activeFile].forEach((cell, idx) => {
+                cell.id = `cell-${activeFile.replace(/[^a-zA-Z0-9]/g, '_')}-${idx}`;
+                const cellDiv = createCellElement(cell, idx);
+                notebookCells.appendChild(cellDiv);
+            });
+            
+            // 모든 셀의 textarea 크기 자동 조정
+            setTimeout(() => {
+                document.querySelectorAll('.cell-input').forEach(textarea => {
+                    autoResizeTextarea(textarea);
+                });
+            }, 100);
+        }
+
+        // 셀 추가 함수 (파일별)
+        function addCell(content = '', cellId = null) {
+            if (!activeFile) return;
+            const cells = fileCells[activeFile] || [];
+            
+            // 새 셀 생성
+            const newCell = {
+                id: `cell-${activeFile.replace(/[^a-zA-Z0-9]/g, '_')}-${cells.length}`,
+                content: content,
+                output: '',
+                status: '',
+                cell_type: 'code' // 기본 셀 타입을 code로 설정
+            };
+            
+            if (cellId) {
+                // 특정 셀 다음에 추가
+                const currentIndex = cells.findIndex(c => c.id === cellId);
+                if (currentIndex !== -1) {
+                    cells.splice(currentIndex + 1, 0, newCell);
+                } else {
+                    cells.push(newCell);
+                }
+            } else {
+                // 맨 마지막에 추가
+                cells.push(newCell);
+            }
+            
+            fileCells[activeFile] = cells;
+            renderNotebookCells();
+            
+            // 새 셀에 포커스
+            setTimeout(() => {
+                const textarea = document.getElementById(newCell.id)?.querySelector('.cell-input');
+                if (textarea) textarea.focus();
+            }, 50);
+            return newCell;
+        }
+
+        // 셀 생성 함수 (파일별)
+        function createCellElement(cell, idx) {
+            const cellDiv = document.createElement('div');
+            cellDiv.className = 'cell';
+            cellDiv.id = cell.id;
+            
+            // 현재 파일의 셀 개수 확인
+            const currentCells = fileCells[activeFile] || [];
+            const isOnlyCell = currentCells.length === 1;
+            
+            // crawl 타입 셀인지 확인
+            const isCrawlCell = cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json';
+            const isJsonMode = cell.cell_type === 'crawl_json';
+            
+            if (isCrawlCell) {
+                // crawl 셀용 UI
+                cellDiv.innerHTML = `
+                    <div class="cell-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="cell-number">Crawl [${idx + 1}]:</span>
+                            <span class="execution-count" id="exec-${cell.id}"></span>
+                            <span class="cell-status ${cell.status}" id="status-${cell.id}"></span>
+                        </div>
+                        <div class="cell-actions">
+                            <div class="cell-name-input">
+                                <input type="text" id="cell-name-${cell.id}" placeholder="셀 이름" value="${cell.name || ''}" onchange="updateCellName('${cell.id}', this.value)" style="width: 120px; padding: 0.3rem 0.5rem; font-size: 0.8rem; border: 1px solid #718096; border-radius: 4px; background: #4a5568; color: #e2e8f0;">
+                            </div>
+                            <div class="xml-toggle">
+                                <label class="switch">
+                                    <input type="checkbox" id="xml-toggle-${cell.id}" onchange="toggleJsonOutput('${cell.id}')" ${isJsonMode ? 'checked' : ''}>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="xml-label">JSON</span>
+                            </div>
+                            <button class="cell-btn run" onclick="runCell('${cell.id}')" title="실행">▶️</button>
+                            <button class="cell-btn add" onclick="addCell('', '${cell.id}')" title="셀 추가">➕</button>
+                            ${isOnlyCell ? '' : `<button class="cell-btn delete" onclick="deleteCell('${cell.id}')" title="삭제">🗑️</button>`}
+                            ${activeFile && activeFile.toLowerCase().endsWith('.npn') ? `<button class="cell-btn add" onclick="addCrawlCell('${cell.id}')" title="수집 추가">🕷️</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="crawl-cell-content">
+                        <div class="crawl-controls" id="crawl-controls-${cell.id}" ${isJsonMode ? 'style="display: none;"' : ''}>
+                            <div class="crawl-row">
+                                <label>Job Type:</label>
+                                <select class="crawl-job-type" onchange="updateCrawlCell('${cell.id}', 'job_type', this.value)">
+                                    <option value="do">Do</option>
+                                    <option value="find">Find</option>
+                                    <option value="data">Data</option>
+                                    <option value="save">Save</option>
+                                    <option value="load">Load</option>
+                                    <option value="python">Python</option>
+                                    <option value="wait">Wait</option>
+                                    <option value="request">Request</option>
+                                    <option value="run">Run</option>
+                                    <option value="test">Test</option>
+                                </select>
+                            </div>
+                            <div class="crawl-row">
+                                <label id="action-label-${cell.id}">Action:</label>
+                                <select class="crawl-action" onchange="updateCrawlCell('${cell.id}', 'action', this.value)">
+                                    <option value="">선택하세요</option>
+                                </select>
+                            </div>
+                            <div class="crawl-params" id="crawl-params-${cell.id}">
+                                <!-- 동적으로 파라미터 필드들이 생성됨 -->
+                            </div>
+                        </div>
+                        <div class="xml-output-section" id="xml-output-${cell.id}" ${isJsonMode ? '' : 'style="display: none;"'}>
+                            <div class="xml-header">
+                                <h4>JSON 출력</h4>
+                                <button class="xml-copy-btn" onclick="copyJsonOutput('${cell.id}')" title="JSON 복사">📋</button>
+                            </div>
+                            <textarea class="xml-output-textarea" id="xml-content-${cell.id}" placeholder="JSON 출력이 여기에 표시됩니다..." oninput="updateJsonContent('${cell.id}'); autoResizeTextarea(this)"></textarea>
+                        </div>
+                    </div>
+                    <div class="cell-output" id="output-${cell.id}" style="display: none;"></div>
+                `;
+                
+                // crawl 셀 초기화
+                setTimeout(() => {
+                    initializeCrawlCell(cell.id, cell.content);
+                    
+                    // crawl_json 타입일 때는 JSON 출력 자동 생성 (빈 내용일 때만)
+                    if (cell.cell_type === 'crawl_json') {
+                        setTimeout(() => {
+                            const jsonTextarea = document.getElementById(`xml-content-${cell.id}`);
+                            if (jsonTextarea && !jsonTextarea.value.trim()) {
+                                generateJsonOutput(cell.id);
+                            }
+                        }, 100);
+                    }
+                }, 10);
+            } else {
+                // 일반 코드 셀
+                cellDiv.innerHTML = `
+                    <div class="cell-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="cell-number">In [${idx + 1}]:</span>
+                            <span class="execution-count" id="exec-${cell.id}"></span>
+                            <span class="cell-status ${cell.status}" id="status-${cell.id}"></span>
+                        </div>
+                        <div class="cell-actions">
+                            <button class="cell-btn run" onclick="runCell('${cell.id}')" title="실행">▶️</button>
+                            <button class="cell-btn add" onclick="addCell('', '${cell.id}')" title="셀 추가">➕</button>
+                            ${isOnlyCell ? '' : `<button class="cell-btn delete" onclick="deleteCell('${cell.id}')" title="삭제">🗑️</button>`}
+                            ${activeFile && activeFile.toLowerCase().endsWith('.npn') ? `<button class="cell-btn add" onclick="addCrawlCell('${cell.id}')" title="수집 추가">🕷️</button>` : ''}
+                        </div>
+                    </div>
+                    <textarea class="cell-input" placeholder="Python 코드를 입력하세요..." onkeydown="handleKeyDown(event, '${cell.id}')" oninput="autoResizeTextarea(this)">${cell.content}</textarea>
+                    <div class="cell-output" id="output-${cell.id}" style="display: none;"></div>
+                `;
+            }
+
+            // 셀 생성 후 textarea 크기 자동 조정 및 output 로드
+            setTimeout(() => {
+                const textarea = cellDiv.querySelector('.cell-input');
+                if (textarea) {
+                    autoResizeTextarea(textarea);
+                }
+                
+                // 저장된 output 로드
+                loadCellOutput(cell.id);
+            }, 10);
+
+            return cellDiv;
+        }
+
+        function autoResizeTextarea(textarea) {
+            // 높이를 초기화하여 정확한 스크롤 높이 계산
+            textarea.style.height = 'auto';
+            
+            // 내용에 따른 높이 계산 (최소 100px, 라인당 약 20px)
+            const minHeight = 100;
+            const lineHeight = 20;
+            const lines = textarea.value.split('\n').length;
+            const calculatedHeight = Math.max(minHeight, lines * lineHeight);
+            
+            // 높이 설정
+            textarea.style.height = calculatedHeight + 'px';
+            
+            // 스크롤바가 생기지 않도록 추가 조정
+            if (textarea.scrollHeight > calculatedHeight) {
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+        }
+
+        // 셀 output 저장 함수
+        function saveCellOutput(cellId, output) {
+            if (!activeFile || !fileCells[activeFile]) return;
+            
+            const cell = fileCells[activeFile].find(c => c.id === cellId);
+            if (cell) {
+                // output 히스토리 배열 초기화
+                if (!cell.output_history) {
+                    cell.output_history = [];
+                }
+                
+                // 새로운 output으로 덮어쓰기 (이전 히스토리 제거)
+                cell.output_history = [{
+                    timestamp: new Date().toISOString(),
+                    output: output,
+                    execution_count: cell.execution_count || 1
+                }];
+                
+                // 파일에 저장
+                saveNotebookToFile();
+            }
+        }
+
+        // 셀 output 로드 함수
+        function loadCellOutput(cellId) {
+            if (!activeFile || !fileCells[activeFile]) return;
+            
+            const cell = fileCells[activeFile].find(c => c.id === cellId);
+            if (cell && cell.output_history && cell.output_history.length > 0) {
+                const outputDiv = document.getElementById(`output-${cellId}`);
+                if (outputDiv) {
+                    outputDiv.style.display = 'block';
+                    
+                    // 기존 output 제거
+                    outputDiv.innerHTML = '';
+                    
+                    // 가장 최근 output만 표시 (덮어쓰기 방식)
+                    const latestEntry = cell.output_history[cell.output_history.length - 1];
+                    const outputEntryDiv = document.createElement('div');
+                    outputEntryDiv.className = 'cell-output-new';
+                    outputEntryDiv.textContent = latestEntry.output;
+                    outputEntryDiv.setAttribute('data-timestamp', latestEntry.timestamp);
+                    outputEntryDiv.setAttribute('data-execution-count', latestEntry.execution_count);
+                    outputDiv.appendChild(outputEntryDiv);
+                }
+            }
+        }
+
+        function handleKeyDown(event, cellId) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                event.preventDefault();
+                runCell(cellId);
+            } else if (event.key === 'Enter' && event.shiftKey) {
+                event.preventDefault();
+                addCellAfter(cellId);
+            } else if (event.key === 's' && event.ctrlKey) {
+                event.preventDefault();
+                saveNotebookToFile();
+            }
+        }
+
+        // 셀 실행 큐 처리 함수
+        function processCellQueue() {
+            console.log('processCellQueue 호출됨 - isExecuting:', isExecuting, '큐 길이:', cellExecutionQueue.length);
+            
+            if (isExecuting) {
+                console.log('이미 실행 중이므로 대기');
+                return;
+            }
+            
+            if (cellExecutionQueue.length === 0) {
+                console.log('큐가 비어있음');
+                return;
+            }
+            
+            isExecuting = true;
+            const nextCell = cellExecutionQueue.shift();
+            currentExecutingCell = nextCell;
+            
+            console.log(`다음 셀 실행 시작: ${nextCell}`);
+            
+            // 실제 셀 실행
+            executeCell(nextCell);
+        }
+
+        // 실제 셀 실행 함수
+        function executeCell(cellId) {
+            if (!activeFile) {
+                alert('실행할 파일을 먼저 선택해주세요.');
+                isExecuting = false;
+                currentExecutingCell = null;
+                processCellQueue(); // 다음 셀 처리
+                return;
+            }
+
+            // 파일 타입 체크
+            const fileName = activeFile.split('/').pop().toLowerCase();
+            if (!fileName.endsWith('.py') && !fileName.endsWith('.ipynb') && !fileName.endsWith('.npn')) {
+                alert('Python 파일(.py), Jupyter 노트북(.ipynb), NPN(.npn) 파일만 코드를 실행할 수 있습니다.');
+                isExecuting = false;
+                currentExecutingCell = null;
+                processCellQueue(); // 다음 셀 처리
+                return;
+            }
+
+            if (!fileKernels[activeFile]) {
+                alert('커널이 준비되지 않았습니다. 커널을 초기화해주세요.');
+                isExecuting = false;
+                currentExecutingCell = null;
+                processCellQueue(); // 다음 셀 처리
+                return;
+            }
+
+            const cells = fileCells[activeFile] || [];
+            const cell = cells.find(c => c.id === cellId);
+            if (!cell) {
+                isExecuting = false;
+                currentExecutingCell = null;
+                processCellQueue(); // 다음 셀 처리
+                return;
+            }
+
+            const outputDiv = document.querySelector(`#output-${cell.id}`);
+            const statusSpan = document.querySelector(`#status-${cell.id}`);
+            const execSpan = document.querySelector(`#exec-${cell.id}`);
+
+            // crawl 셀인지 확인
+            const isCrawlCell = cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json';
+            
+            let code = '';
+            
+            if (isCrawlCell) {
+                // crawl 셀의 경우 crawl_data에서 코드 생성
+                if (!cell.crawl_data) {
+                    alert('crawl 셀 데이터가 없습니다. 셀을 다시 설정해주세요.');
+                    isExecuting = false;
+                    currentExecutingCell = null;
+                    processCellQueue(); // 다음 셀 처리
+                    return;
+                }
+                
+                // name input에서 job name 가져오기
+                const nameInput = document.getElementById(`cell-name-${cellId}`);
+                const jobName = nameInput ? nameInput.value.trim() : `crawl_${cellId}`;
+                
+                // class_job import 및 job 선언 코드 생성
+                code = generateCrawlCode(cell.crawl_data, jobName);
+            } else {
+                // 일반 코드 셀의 경우 textarea에서 코드 가져오기
+                const textarea = document.querySelector(`#${cellId} .cell-input`);
+                code = textarea.value.trim();
+                if (!code) {
+                    isExecuting = false;
+                    currentExecutingCell = null;
+                    processCellQueue(); // 다음 셀 처리
+                    return;
+                }
+            }
+
+            // 상태 업데이트 - 실행중으로 변경
+            cell.status = 'running';
+            statusSpan.textContent = '실행중...';
+            statusSpan.className = 'cell-status running';
+            outputDiv.style.display = 'block';
+            
+            // 기존 output 모두 지우고 실행중 표시만 추가
+            outputDiv.innerHTML = '';
+            const runningDiv = document.createElement('div');
+            runningDiv.innerHTML = '<div class="spinner"></div> 실행중...';
+            runningDiv.className = 'cell-output-running';
+            outputDiv.appendChild(runningDiv);
+            
+            outputDiv.className = 'cell-output';
+
+            // 현재 활성 탭의 커널에 코드 실행 요청
+            const kernelId = fileKernels[activeFile];
+            
+            // crawl 셀의 경우 생성된 코드를 콘솔에 출력
+            if (isCrawlCell) {
+                console.log('=== Crawl Cell 실행 코드 ===');
+                console.log(code);
+                console.log('=== 코드 끝 ===');
+            }
+            
+            fetch(`/api/kernels/${kernelId}/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    code: code
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cell.status = 'completed';
+                    statusSpan.textContent = '완료';
+                    statusSpan.className = 'cell-status completed';
+                    outputDiv.className = 'cell-output success';
+                    
+                    // stdout/result/stderr를 결합하여 출력
+                    let output = '';
+                    console.log('data.result 타입:', typeof data.result);
+                    console.log('data.result 값:', data.result);
+                    
+                    if (data.result && data.result.stdout && data.result.stdout.trim() !== '') {
+                        output += data.result.stdout;
+                        console.log('stdout 추가됨, 현재 output:', output);
+                    }
+                    // result가 문자열이고 'None'이 아닐 때만 추가
+                    if (data.result && typeof data.result.result === 'string' && data.result.result.trim() !== '' && data.result.result !== 'None') {
+                        if (output) output += '\n';
+                        output += data.result.result;
+                    }
+                    if (data.result && data.result.stderr && data.result.stderr.trim() !== '') {
+                        if (output) output += '\n';
+                        output += data.result.stderr;
+                    }
+                    
+                    // 디버깅용 출력 추가
+                    console.log('실행 결과 데이터:', data);
+                    console.log('data 객체의 모든 키:', Object.keys(data));
+                    console.log('data.result 객체:', data.result);
+                    console.log('data.result.stdout:', data.result ? data.result.stdout : 'undefined');
+                    console.log('data.result.stderr:', data.result ? data.result.stderr : 'undefined');
+                    console.log('data.result.result:', data.result ? data.result.result : 'undefined');
+                    console.log('최종 output:', output);
+                    console.log('output 길이:', output.length);
+                    
+                    console.log('outputDiv 요소:', outputDiv);
+                    console.log('outputDiv 현재 내용:', outputDiv.textContent);
+                    
+                    // 실행중 표시 제거
+                    const runningDiv = outputDiv.querySelector('.cell-output-running');
+                    if (runningDiv) {
+                        runningDiv.remove();
+                    }
+                    
+                    // 새로운 output 추가 (이전 output 유지)
+                    if (output && output.trim() !== '') {
+                        const newOutputDiv = document.createElement('div');
+                        newOutputDiv.className = 'cell-output-new';
+                        newOutputDiv.textContent = output;
+                        outputDiv.appendChild(newOutputDiv);
+                        
+                        // 셀 데이터에 output 저장
+                        saveCellOutput(cellId, output);
+                    } else if (!output || output.trim() === '') {
+                        // output이 없으면 "실행 완료" 표시
+                        const newOutputDiv = document.createElement('div');
+                        newOutputDiv.className = 'cell-output-new';
+                        newOutputDiv.textContent = '실행 완료';
+                        outputDiv.appendChild(newOutputDiv);
+                        
+                        // 셀 데이터에 output 저장
+                        saveCellOutput(cellId, '실행 완료');
+                    }
+                    
+                    console.log('outputDiv 설정 후 내용:', outputDiv.textContent);
+                    execSpan.textContent = `[${data.execution_count || '?'}]`;
+                } else {
+                    cell.status = 'error';
+                    statusSpan.textContent = '오류';
+                    statusSpan.className = 'cell-status error';
+                    outputDiv.className = 'cell-output error';
+                    
+                    // 에러 메시지 표시
+                    let errorOutput = '';
+                    if (data.error) {
+                        errorOutput += data.error;
+                    }
+                    if (data.result && data.result.stderr) {
+                        errorOutput += '\n' + data.result.stderr;
+                    }
+                    
+                    outputDiv.textContent = errorOutput || '실행 중 오류가 발생했습니다.';
+                }
+            })
+            .catch(error => {
+                cell.status = 'error';
+                statusSpan.textContent = '오류';
+                statusSpan.className = 'cell-status error';
+                outputDiv.className = 'cell-output error';
+                outputDiv.textContent = '네트워크 오류가 발생했습니다.';
+                console.error('셀 실행 오류:', error);
+            })
+            .finally(() => {
+                // 셀 실행 완료 후 큐 상태 초기화 및 다음 셀 처리
+                isExecuting = false;
+                currentExecutingCell = null;
+                console.log('셀 실행 완료, 다음 셀 처리 시작');
+                processCellQueue(); // 다음 셀 처리
+            });
+        }
+
+        // crawl 셀용 코드 생성 함수
+        function generateCrawlCode(crawlData, jobName) {
+            const { job_type, action, params } = crawlData;
+            
+            // 기본 import 코드
+            let code = `import sys\n`;
+            code += `import os\n`;
+            code += `# 프로젝트 루트 경로를 동적으로 찾기\n`;
+            code += `current_dir = os.getcwd()\n`;
+            code += `# CLASS나 MODULE 폴더가 있는지 확인하고 경로 설정\n`;
+            code += `if os.path.exists(os.path.join(current_dir, 'CLASS')):\n`;
+            code += `    sys.path.append(os.path.join(current_dir, 'CLASS'))\n`;
+            code += `    sys.path.append(os.path.join(current_dir, 'MODULE'))\n`;
+            code += `elif os.path.exists(os.path.join(current_dir, '..', 'CLASS')):\n`;
+            code += `    sys.path.append(os.path.join(current_dir, '..', 'CLASS'))\n`;
+            code += `    sys.path.append(os.path.join(current_dir, '..', 'MODULE'))\n`;
+            code += `else:\n`;
+            code += `    print("CLASS/MODULE 폴더를 찾을 수 없습니다. 경로를 확인해주세요.")\n`;
+            code += `    print(f"현재 디렉토리: {current_dir}")\n`;
+            code += `from class_job import Job\n\n`;
+            
+            // shared_dict 초기화 (커널에서 공용으로 사용)
+            code += `# 커널 네임스페이스에서 shared_dict 사용\n`;
+            code += `if 'shared_dict' not in globals():\n`;
+            code += `    globals()['shared_dict'] = {}\n`;
+            code += `    print("공용 데이터 딕셔너리 초기화됨")\n`;
+            code += `shared_dict = globals()['shared_dict']\n\n`;
+            
+            // job 선언 - name은 name input에서 가져옴
+            code += `# ${jobName} - ${job_type} ${action}\n`;
+            code += `job_name = "${jobName}"\n`;
+            
+            // args를 JSON 형태로 구성 (params에서 action 제거)
+            let args = {
+                type: job_type
+            };
+            
+            // params에서 action 키를 제외하고 복사
+            Object.keys(params).forEach(key => {
+                if (key !== 'action') {
+                    args[key] = params[key];
+                }
+            });
+            
+            // job_type에 따라 action을 적절한 파라미터로 변환하고 params에서 action 제거
+            if (job_type === 'request') {
+                args.request_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'find') {
+                args.find_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'data') {
+                args.convert_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'save') {
+                args.save_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'load') {
+                args.load_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'python') {
+                args.python_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'wait') {
+                args.wait_type = action;
+                delete args.action; // action 키 제거
+            } else if (job_type === 'test') {
+                args.test_type = action;
+                delete args.action; // action 키 제거
+            } else {
+                // do 타입의 경우 action 그대로 사용
+                args.action = action;
+            }
+            
+            code += `# job args 구성\n`;
+            code += `job_args = ${JSON.stringify(args, null, 4)}\n`;
+            
+            // Job 객체 생성 및 실행
+            code += `\n# Job 객체 생성 및 실행\n`;
+            code += `try:\n`;
+            code += `    job = Job(job_name, job_args, shared_dict)\n`;
+            code += `    result = job.run()\n`;
+            code += `    print(f"Job '{job_name}' 실행 결과: {result}")\n`;
+            code += `    # job 결과를 shared_dict에 job name을 키로 저장\n`;
+            code += `    shared_dict[job_name] = result\n`;
+            code += `    print(f"Job 결과가 shared_dict['{job_name}']에 저장되었습니다.")\n`;
+            code += `    if hasattr(result, 'data') and result.data is not None:\n`;
+            code += `        print(f"결과 데이터: {result.data}")\n`;
+            code += `    if hasattr(result, 'message') and result.message:\n`;
+            code += `        print(f"메시지: {result.message}")\n`;
+            code += `except Exception as e:\n`;
+            code += `    print(f"Job 실행 중 오류 발생: {str(e)}")\n`;
+            code += `    import traceback\n`;
+            code += `    traceback.print_exc()\n`;
+            code += `\n`;
+            code += `print("Job 실행 완료")\n`;
+            
+            return code;
+        }
+
+        function addCellAfter(cellId) {
+            const newCell = addCell('', cellId);
+            
+            // 새 셀에 포커스
+            setTimeout(() => {
+                const newCellElement = document.getElementById(newCell.id);
+                if (newCellElement) {
+                    const textarea = newCellElement.querySelector('.cell-input');
+                    if (textarea) textarea.focus();
+                }
+            }, 100);
+        }
+
+        function deleteCell(cellId) {
+            if (!activeFile || !fileCells[activeFile]) {
+                alert('삭제할 파일이 선택되지 않았습니다.');
+                return;
+            }
+
+            const currentCells = fileCells[activeFile];
+            if (currentCells.length <= 1) {
+                alert('최소 하나의 셀은 유지해야 합니다.');
+                return;
+            }
+
+            const cellIndex = currentCells.findIndex(c => c.id === cellId);
+            if (cellIndex === -1) return;
+
+            currentCells.splice(cellIndex, 1);
+            document.getElementById(cellId).remove();
+            
+            // 셀 번호 업데이트
+            updateCellNumbers();
+        }
+
+        function updateCellNumbers() {
+            cells.forEach((cell, index) => {
+                const numberSpan = document.querySelector(`#${cell.id} .cell-number`);
+                if (numberSpan) {
+                    numberSpan.textContent = `In [${index + 1}]:`;
+                }
+            });
+        }
+
+        function runAllCells() {
+            cells.forEach(cell => {
+                if (cell.content.trim()) {
+                    setTimeout(() => runCell(cell.id), 100);
+                }
+            });
+        }
+
+        function clearAllOutputs() {
+            cells.forEach(cell => {
+                const outputDiv = document.querySelector(`#output-${cell.id}`);
+                if (outputDiv) {
+                    outputDiv.style.display = 'none';
+                    outputDiv.textContent = '';
+                }
+                const statusSpan = document.querySelector(`#status-${cell.id}`);
+                if (statusSpan) {
+                    statusSpan.textContent = '대기중';
+                    statusSpan.className = 'cell-status';
+                }
+                const execSpan = document.querySelector(`#exec-${cell.id}`);
+                if (execSpan) {
+                    execSpan.textContent = '';
+                }
+            });
+        }
+
+        function clearAllCells() {
+            if (!confirm('모든 셀을 삭제하시겠습니까?')) return;
+            
+            cells = [];
+            document.getElementById('notebookCells').innerHTML = '';
+            cellCounter = 0;
+            addCell();
+        }
+
+        function checkKernelStatus() {
+            // 커널 상태 확인 활성화
+            console.log('checkKernelStatus 호출됨');
+            
+            console.log('checkKernelStatus 호출됨 - 스택:', new Error().stack);
+            
+            if (!activeFile || !fileKernels[activeFile]) {
+                const statusElement = document.getElementById('kernelStatusText');
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (statusElement) {
+                    statusElement.textContent = '커널 없음';
+                }
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 비활성';
+                    displayElement.style.color = '#a0aec0';
+                }
+                return;
+            }
+
+            const kernelId = fileKernels[activeFile];
+            console.log(`파일별 커널 상태 확인: ${activeFile} -> ${kernelId}`);
+            
+            fetch(`/api/kernels/${kernelId}/status`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusElement = document.getElementById('kernelStatusText');
+                    const displayElement = document.getElementById('kernelStatusDisplay');
+                    
+                    if (data.success) {
+                        let statusText = '';
+                        let displayText = '';
+                        let statusColor = '#a0aec0';
+                        
+                        if (data.status === 'idle' || data.status === 'ready') {
+                            statusText = '준비됨';
+                            displayText = '커널 상태: 활성';
+                            statusColor = '#68d391';
+                        } else if (data.status === 'busy') {
+                            statusText = '실행중';
+                            displayText = '커널 상태: 실행중';
+                            statusColor = '#f6ad55';
+                        } else {
+                            statusText = data.status;
+                            displayText = `커널 상태: ${data.status}`;
+                            statusColor = '#fc8181';
+                        }
+                        
+                        if (statusElement) {
+                            statusElement.textContent = statusText;
+                        }
+                        if (displayElement) {
+                            displayElement.textContent = displayText;
+                            displayElement.style.color = statusColor;
+                        }
+                    } else {
+                        if (statusElement) {
+                            statusElement.textContent = '오류';
+                        }
+                        if (displayElement) {
+                            displayElement.textContent = '커널 상태: 오류';
+                            displayElement.style.color = '#fc8181';
+                        }
+                    }
+                })
+                .catch(error => {
+                    const statusElement = document.getElementById('kernelStatusText');
+                    const displayElement = document.getElementById('kernelStatusDisplay');
+                    
+                    if (statusElement) {
+                        statusElement.textContent = '연결 실패';
+                    }
+                    if (displayElement) {
+                        displayElement.textContent = '커널 상태: 연결 실패';
+                        displayElement.style.color = '#fc8181';
+                    }
+                    console.error('커널 상태 확인 실패:', error);
+                });
+        }
+
+        function saveNotebookToFile() {
+            console.log('=== saveNotebookToFile 호출됨 ===');
+            
+            if (!activeFile) {
+                console.log('activeFile이 없음');
+                alert('저장할 파일을 먼저 선택해주세요.');
+                return;
+            }
+
+            console.log('activeFile:', activeFile);
+            console.log('fileCells 전체:', fileCells);
+            console.log('fileCells[activeFile]:', fileCells[activeFile]);
+            
+            // 현재 노트북의 모든 셀 내용을 수집
+            const cells = fileCells[activeFile] || [];
+            
+            // 디버깅: 저장 시작 시 상태 확인
+            console.log('=== 저장 시작 ===');
+            console.log('activeFile:', activeFile);
+            console.log('fileCells:', fileCells);
+            console.log('cells 배열:', cells);
+            console.log('cells 길이:', cells.length);
+            console.log('cells 타입:', typeof cells);
+            console.log('cells가 배열인가?', Array.isArray(cells));
+            
+            if (!Array.isArray(cells) || cells.length === 0) {
+                console.log('셀이 없거나 배열이 아님');
+                alert('저장할 셀이 없습니다.');
+                return;
+            }
+            
+            const notebookContent = [];
+            
+            cells.forEach(cell => {
+                console.log('=== 셀 처리 시작 ===', cell);
+                let content = '';
+                
+                // crawl 셀인지 확인
+                const isCrawlCell = cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json';
+                
+                console.log(`셀 ${cell.id} 타입 확인:`, {
+                    cell_type: cell.cell_type,
+                    is_crawl: isCrawlCell,
+                    cell_id: cell.id
+                });
+                
+                if (isCrawlCell) {
+                    // crawl 셀의 경우 JSON 모드 또는 combobox UI 모드 확인
+                    const jsonTextarea = document.getElementById(`xml-content-${cell.id}`);
+                    const xmlToggle = document.getElementById(`xml-toggle-${cell.id}`);
+                    const isJsonMode = xmlToggle && xmlToggle.checked; // 토글 스위치 상태로 판단
+                    const cellType = isJsonMode ? 'crawl_json' : 'crawl_ui';
+                    
+                    console.log(`Crawl 셀 ${cell.id} 저장 모드 확인:`, {
+                        cell_type: cell.cell_type,
+                        has_json_textarea: !!jsonTextarea,
+                        has_xml_toggle: !!xmlToggle,
+                        toggle_checked: xmlToggle?.checked,
+                        is_json_mode: isJsonMode
+                    });
+                    
+                    if (isJsonMode) {
+                        // JSON 모드: xml-content textarea에서 내용 가져오기
+                        content = jsonTextarea.value;
+                        console.log(`Crawl 셀 ${cell.id} JSON 모드에서 내용 가져옴:`, content.substring(0, 100) + '...');
+                    } else {
+                        // Combobox UI 모드: 현재 설정된 값들을 JSON으로 변환
+                        let crawlData = null;
+                        
+                        // 1. crawl_data가 있으면 그것을 사용
+                        if (cell.crawl_data) {
+                            crawlData = cell.crawl_data;
+                            console.log(`Crawl 셀 ${cell.id} crawl_data 사용:`, crawlData);
+                        } else {
+                            // 2. UI 요소에서 값을 가져오기 시도
+                            const jobTypeSelect = document.querySelector(`#${cell.id} .crawl-job-type`);
+                            const actionSelect = document.querySelector(`#${cell.id} .crawl-action`);
+                            
+                            console.log(`Crawl 셀 ${cell.id} UI 요소 찾기:`, {
+                                jobTypeSelect: !!jobTypeSelect,
+                                actionSelect: !!actionSelect,
+                                jobTypeValue: jobTypeSelect?.value,
+                                actionValue: actionSelect?.value
+                            });
+                            
+                            if (jobTypeSelect && actionSelect) {
+                                crawlData = {
+                                    job_type: jobTypeSelect.value || 'do',
+                                    action: actionSelect.value || '',
+                                    params: {}
+                                };
+                                
+                                // 파라미터 값들 수집
+                                const paramInputs = document.querySelectorAll(`#${cell.id} input[name], #${cell.id} select[name]`);
+                                console.log(`Crawl 셀 ${cell.id} 파라미터 입력 필드:`, paramInputs.length);
+                                
+                                paramInputs.forEach(input => {
+                                    if (input.name && input.value) {
+                                        crawlData.params[input.name] = input.value;
+                                        console.log(`파라미터 추가: ${input.name} = ${input.value}`);
+                                    }
+                                });
+                                
+                                // focus 파라미터 처리
+                                const focusInput = document.querySelector(`#${cell.id} input[name="focus"]`);
+                                const currentCheckbox = document.querySelector(`#${cell.id} #current-checkbox-${cell.id}`);
+                                
+                                if (focusInput && currentCheckbox) {
+                                    const isCurrent = currentCheckbox.checked;
+                                    const focusValue = focusInput.value;
+                                    
+                                    if (isCurrent) {
+                                        crawlData.params.focus = 'current';
+                                        console.log(`Focus 파라미터 추가: current`);
+                                    } else if (focusValue) {
+                                        crawlData.params.focus = { xpath: focusValue };
+                                        console.log(`Focus 파라미터 추가: xpath = ${focusValue}`);
+                                    }
+                                }
+                                
+                                console.log(`Crawl 셀 ${cell.id} UI 모드에서 생성된 데이터:`, crawlData);
+                            }
+                        }
+                        
+                        if (crawlData) {
+                            content = JSON.stringify(crawlData, null, 2);
+                            console.log(`Crawl 셀 ${cell.id} 최종 JSON 생성:`, content);
+                        } else {
+                            // 3. 모든 방법이 실패하면 기존 content 사용
+                            content = cell.content || '';
+                            console.log(`Crawl 셀 ${cell.id} 모든 방법 실패, 기존 content 사용:`, content.substring(0, 100) + '...');
+                        }
+                    }
+                } else {
+                    // 일반 코드 셀: cell-input textarea에서 내용 가져오기
+                    const textarea = document.querySelector(`#${cell.id} .cell-input`);
+                    content = textarea ? textarea.value : cell.content;
+                }
+                
+                // content가 문자열이 아닌 경우 문자열로 변환
+                if (typeof content !== 'string') {
+                    content = String(content);
+                }
+                
+                // 디버깅: 각 셀의 처리 과정 로그
+                console.log(`셀 ${cell.id} 처리:`, {
+                    cell_type: cell.cell_type,
+                    is_crawl: isCrawlCell,
+                    content_length: content.length,
+                    content_preview: content.substring(0, 100) + '...',
+                    has_json_textarea: !!document.getElementById(`xml-content-${cell.id}`),
+                    json_textarea_display: document.getElementById(`xml-content-${cell.id}`)?.style.display
+                });
+                
+                if (content.trim() !== '') {
+                    if (isCrawlCell) {
+                        console.log(`Crawl 셀 ${cell.id} JSON 분할 시작:`, content);
+                        function splitJsonObjects(jsonStr) {
+                            const objects = [];
+                            let current = '';
+                            let braceCount = 0;
+                            let inString = false;
+                            let escapeNext = false;
+                            for (let i = 0; i < jsonStr.length; i++) {
+                                const char = jsonStr[i];
+                                if (escapeNext) { current += char; escapeNext = false; continue; }
+                                if (char === '\\') { escapeNext = true; current += char; continue; }
+                                if (char === '"' && !escapeNext) { inString = !inString; }
+                                if (!inString) {
+                                    if (char === '{') { if (braceCount === 0) { current = char; } else { current += char; } braceCount++; }
+                                    else if (char === '}') { current += char; braceCount--; if (braceCount === 0) { const trimmed = current.trim(); if (trimmed) { objects.push(trimmed); } current = ''; } }
+                                    else { if (braceCount > 0) { current += char; } }
+                                } else { current += char; }
+                            }
+                            return objects;
+                        }
+                        const jsonObjects = splitJsonObjects(content);
+                        console.log(`Crawl 셀 ${cell.id} JSON 분할 결과:`, {
+                            original_length: content.length,
+                            split_count: jsonObjects.length,
+                            objects: jsonObjects.map((obj, idx) => ({ index: idx, length: obj.length, preview: obj.substring(0, 50) + '...' }))
+                        });
+                        
+                        // JSON 모드인지 확인
+                        const xmlToggle2 = document.getElementById(`xml-toggle-${cell.id}`);
+                        const isJsonMode2 = xmlToggle2 && xmlToggle2.checked; // 토글 스위치 상태로 판단
+                        const cellType = isJsonMode2 ? 'crawl_json' : 'crawl_ui';
+                        
+                        if (jsonObjects.length > 1) {
+                            jsonObjects.forEach((jsonStr, index) => {
+                                try {
+                                    JSON.parse(jsonStr);
+                                    const cellData = { 
+                                        cell_type: cellType, 
+                                        content: jsonStr, 
+                                        metadata: { name: cell.name || '' }, // 셀 이름 저장
+                                        output_history: cell.output_history || []
+                                    };
+                                    notebookContent.push(cellData);
+                                    console.log(`Crawl 셀 ${cell.id} 분할 ${index + 1} 추가됨 (타입: ${cellType}, name: ${cell.name}, output_history: ${cell.output_history ? cell.output_history.length : 0}개)`);
+                                } catch (parseError) { 
+                                    console.error(`Crawl 셀 ${cell.id} 분할 ${index + 1} 파싱 실패:`, parseError);
+                                }
+                            });
+                        } else {
+                            const cellData = { 
+                                cell_type: cellType, 
+                                content: content, 
+                                metadata: { name: cell.name || '' }, // 셀 이름 저장
+                                output_history: cell.output_history || []
+                            };
+                            notebookContent.push(cellData);
+                            console.log(`Crawl 셀 ${cell.id} 단일 객체로 추가됨 (타입: ${cellType}, name: ${cell.name}, output_history: ${cell.output_history ? cell.output_history.length : 0}개)`);
+                        }
+                                            } else {
+                            // output_history도 함께 저장
+                            const cellData = { 
+                                cell_type: 'code', 
+                                content: content, 
+                                metadata: {},
+                                output_history: cell.output_history || []
+                            };
+                            notebookContent.push(cellData);
+                            console.log(`코드 셀 ${cell.id} 추가됨 (output_history: ${cell.output_history ? cell.output_history.length : 0}개)`);
+                        }
+                } else {
+                    console.log(`셀 ${cell.id} 빈 내용으로 건너뜀`);
+                }
+            });
+            // 디버깅: 분할된 notebookContent 출력
+            console.log('notebookContent:', notebookContent);
+
+            if (notebookContent.length === 0) {
+                alert('저장할 내용이 없습니다.');
+                return;
+            }
+
+            // 파일 확장자에 따라 저장 형식 결정
+            const fileName = activeFile.split('/').pop();
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            console.log('파일 확장자 확인:', { fileName, fileExtension, activeFile });
+            let contentToSave = '';
+            if (fileExtension === 'ipynb') {
+                const notebook = {
+                    cells: notebookContent.map(item => ({ 
+                        cell_type: item.cell_type, 
+                        execution_count: null, 
+                        metadata: item.metadata, 
+                        outputs: item.output_history ? item.output_history.map(entry => ({
+                            output_type: "stream",
+                            name: "stdout",
+                            text: entry.output
+                        })) : [], 
+                        source: item.content
+                    })),
+                    metadata: { kernelspec: { display_name: "Python 3", language: "python", name: "python3" }, language_info: { codemirror_mode: { name: "ipython", version: 3 }, file_extension: ".py", mimetype: "text/x-python", name: "python", nbconvert_exporter: "python", pygments_lexer: "ipython3", version: "3.8.0" } }, nbformat: 4, nbformat_minor: 4 };
+                contentToSave = JSON.stringify(notebook, null, 2);
+            } else if (fileExtension === 'npn') {
+                const notebook = {
+                    cells: notebookContent.map(item => ({ 
+                        cell_type: item.cell_type, 
+                        metadata: item.metadata, 
+                        source: item.content,
+                        output_history: item.output_history || []
+                    })),
+                    metadata: { kernelspec: { display_name: "Python 3", language: "python", name: "python3" }, language_info: { codemirror_mode: { name: "ipython", version: 3 }, file_extension: ".py", mimetype: "text/x-python", name: "python", nbconvert_exporter: "python", pygments_lexer: "ipython3", version: "3.8.0" } }, nbformat: 4, nbformat_minor: 4 };
+                contentToSave = JSON.stringify(notebook, null, 2);
+            } else {
+                contentToSave = notebookContent.map(item => item.content).join('\n\n');
+            }
+            // 디버깅: 저장 직전 contentToSave 출력
+            console.log('contentToSave:', contentToSave);
+
+            // 파일 저장 API 호출
+            fetch('/api/files/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify({ path: activeFile, content: contentToSave })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 디버깅: 저장 API 응답 출력
+                console.log('save API response:', data);
+                if (data.success) {
+                    // 성공 메시지 표시
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #22543d;
+                        color: #9ae6b4;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    successDiv.textContent = `노트북이 "${fileName}"에 저장되었습니다.`;
+                    document.body.appendChild(successDiv);
+                    
+                    // 3초 후 자동 제거
+                    setTimeout(() => {
+                        successDiv.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }, 3000);
+                    
+                    // 저장 후 자동 reload 제거
+                    // checkFileUpdatedAndReload(activeFile, contentToSave);
+                    
+                } else {
+                    alert(data.message || '파일 저장에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('파일 저장 실패:', error);
+                alert('파일 저장에 실패했습니다.');
+            });
+        }
+
+        function initializeKernel() {
+            if (!activeFile) {
+                alert('초기화할 파일을 먼저 선택하세요.');
+                return;
+            }
+
+            // 파일 타입 체크
+            const fileName = activeFile.split('/').pop().toLowerCase();
+            if (!fileName.endsWith('.py') && !fileName.endsWith('.ipynb') && !fileName.endsWith('.npn')) {
+                alert('Python 파일(.py), Jupyter 노트북(.ipynb), NPN(.npn) 파일만 커널을 초기화할 수 있습니다.');
+                return;
+            }
+
+            if (!confirm('커널을 초기화하시겠습니까? 기존 커널이 있으면 종료 후 새 커널이 생성됩니다. 모든 변수와 실행 기록이 지워집니다.')) {
+                return;
+            }
+
+            const oldKernelId = fileKernels[activeFile];
+            // 1. 기존 커널이 있으면 종료
+            const shutdownOldKernel = oldKernelId ? fetch(`/api/kernels/${oldKernelId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(r => r.json()) : Promise.resolve({ success: true });
+
+            // 2. 새 커널 생성
+            shutdownOldKernel.then(() => {
+                fetch('/api/kernels', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}) // 빈 JSON 객체 추가
+                })
+                .then(response => {
+                    console.log('커널 초기화 응답 상태:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('커널 초기화 응답 데이터:', data);
+                    if (data.success) {
+                        fileKernels[activeFile] = data.kernel_id;
+                        updateKernelInfo();
+                        
+                        // 커널 상태 표시 업데이트
+                        const displayElement = document.getElementById('kernelStatusDisplay');
+                        if (displayElement) {
+                            displayElement.textContent = '커널 상태: 활성';
+                            displayElement.style.color = '#68d391';
+                        }
+                        
+
+                        
+                        // 성공 메시지 표시
+                        const successDiv = document.createElement('div');
+                        successDiv.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #22543d;
+                            color: #9ae6b4;
+                            padding: 1rem;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                            z-index: 1000;
+                            animation: slideIn 0.3s ease;
+                        `;
+                        successDiv.textContent = '새 커널이 생성되었습니다.';
+                        document.body.appendChild(successDiv);
+                        setTimeout(() => {
+                            successDiv.style.animation = 'slideOut 0.3s ease';
+                            setTimeout(() => {
+                                if (successDiv.parentNode) {
+                                    successDiv.parentNode.removeChild(successDiv);
+                                }
+                            }, 300);
+                        }, 3000);
+                        // 모든 셀의 출력 지우기
+                        clearAllOutputs();
+                    } else {
+                        alert(data.error || data.message || '커널 생성에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('커널 생성 실패:', error);
+                    alert(`커널 생성에 실패했습니다: ${error.message}`);
+                });
+            });
+        }
+
+        function shutdownKernel() {
+            if (!activeFile || !fileKernels[activeFile]) {
+                alert('종료할 커널이 없습니다.');
+                return;
+            }
+
+            if (!confirm('커널을 종료하시겠습니까? 모든 변수와 실행 기록이 지워집니다.')) {
+                return;
+            }
+
+            const kernelId = fileKernels[activeFile];
+            fetch(`/api/kernels/${kernelId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 성공 메시지 표시
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #742a2a;
+                        color: #feb2b2;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    successDiv.textContent = '커널이 종료되었습니다.';
+                    document.body.appendChild(successDiv);
+                    
+                    // 3초 후 자동 제거
+                    setTimeout(() => {
+                        successDiv.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }, 3000);
+
+                    // 모든 셀의 출력 지우기
+                    clearAllOutputs();
+                    
+                    // 커널 상태 표시 업데이트
+                    const displayElement = document.getElementById('kernelStatusDisplay');
+                    if (displayElement) {
+                        displayElement.textContent = '커널 상태: 비활성';
+                        displayElement.style.color = '#a0aec0';
+                    }
+                    
+                    // 커널 ID 제거
+                    delete fileKernels[activeFile];
+                } else {
+                    alert(data.message || '커널 종료에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('커널 종료 실패:', error);
+                alert('커널 종료에 실패했습니다.');
+            });
+        }
+
+        function showContextMenu(event, filePath) {
+            event.preventDefault();
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            
+            // 컨텍스트 메뉴에 파일 경로 저장
+            contextMenu.setAttribute('data-file-path', filePath);
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
+
+        function openFile() {
+            const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+            const file = fileTreeData.find(f => f.path === filePath);
+            if (file) {
+                selectFile(file);
+            }
+            hideContextMenu();
+        }
+
+        function refreshFileTree() {
+            loadFileTree();
+        }
+
+        function filterFiles(searchTerm) {
+            const fileItems = document.querySelectorAll('.file-item');
+            fileItems.forEach(item => {
+                const fileName = item.querySelector('.file-name').textContent.toLowerCase();
+                if (fileName.includes(searchTerm.toLowerCase())) {
+                    item.style.display = 'block'; // 표시
+                } else {
+                    item.style.display = 'none'; // 숨김
+                }
+            });
+        }
+
+        function createNewFile() {
+            const fileName = prompt('새 파일 이름을 입력하세요 (예: example.npn):');
+            if (!fileName) return;
+
+            // .npn 파일인지 확인
+            const isNpnFile = fileName.toLowerCase().endsWith('.npn');
+            
+            let initialContent = '';
+            if (isNpnFile) {
+                // .npn 파일용 템플릿 - 기본값이 포함된 crawl 셀
+                const crawlData = {
+                    "job_type": "do",
+                    "action": "click",
+                    "params": {
+                        "focus": "{\"xpath\": \"//button[@id='login']\"}",
+                        "speed": 1.0
+                    }
+                };
+                
+                // 기본값 추가
+                const crawlDataWithDefaults = addDefaultParams(crawlData);
+                
+                initialContent = JSON.stringify({
+                    "cells": [
+                        {
+                            "cell_type": "crawl_ui",
+                            "metadata": {},
+                            "source": JSON.stringify(crawlDataWithDefaults, null, 2)
+                        }
+                    ],
+                    "metadata": {
+                        "kernelspec": {
+                            "display_name": "Python 3",
+                            "language": "python",
+                            "name": "python3"
+                        },
+                        "language_info": {
+                            "codemirror_mode": {
+                                "name": "ipython",
+                                "version": 3
+                            },
+                            "file_extension": ".py",
+                            "mimetype": "text/x-python",
+                            "name": "python",
+                            "nbconvert_exporter": "python",
+                            "pygments_lexer": "ipython3",
+                            "version": "3.8.0"
+                        }
+                    },
+                    "nbformat": 4,
+                    "nbformat_minor": 4
+                }, null, 2);
+            }
+
+            fetch('/api/files/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: fileName,
+                    content: initialContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileTree();
+                } else {
+                    alert(data.message || '파일 생성에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('파일 생성 실패:', error);
+                alert('파일 생성에 실패했습니다.');
+            });
+        }
+
+        function uploadFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadFileTree();
+                    } else {
+                        alert(data.message || '파일 업로드에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('파일 업로드 실패:', error);
+                    alert('파일 업로드에 실패했습니다.');
+                });
+            };
+            input.click();
+        }
+
+        function renameFile() {
+            const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+            const file = fileTreeData.find(f => f.path === filePath);
+            if (!file) return;
+
+            const newName = prompt('새 이름을 입력하세요:', file.name);
+            if (!newName || newName === file.name) return;
+
+            fetch('/api/files/rename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    old_path: filePath,
+                    new_name: newName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileTree();
+                } else {
+                    alert(data.message || '파일 이름 변경에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('파일 이름 변경 실패:', error);
+                alert('파일 이름 변경에 실패했습니다.');
+            });
+        }
+
+        function deleteFile() {
+            const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+            const file = fileTreeData.find(f => f.path === filePath);
+            if (!file) return;
+
+            if (!confirm(`정말로 "${file.name}"을 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            fetch('/api/files/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    path: filePath
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFileTree();
+                } else {
+                    alert(data.message || '파일 삭제에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('파일 삭제 실패:', error);
+                alert('파일 삭제에 실패했습니다.');
+            });
+        }
+
+        function copyFilePath() {
+            const filePath = document.getElementById('contextMenu').getAttribute('data-file-path');
+            navigator.clipboard.writeText(filePath).then(() => {
+                alert('파일 경로가 클립보드에 복사되었습니다.');
+            });
+        }
+
+        function switchSidebarTab(panelId) {
+            console.log('탭 전환 시도:', panelId);
+            
+            // 모든 탭과 패널 비활성화
+            document.querySelectorAll('.sidebar-tab').forEach(tab => {
+                tab.classList.remove('active');
+                console.log('탭 비활성화:', tab);
+            });
+            
+            document.querySelectorAll('.sidebar-panel').forEach(panel => {
+                panel.classList.remove('active');
+                console.log('패널 비활성화:', panel.id);
+            });
+            
+            // 클릭된 탭 활성화 (첫 번째 탭은 fileTreePanel, 두 번째 탭은 kernelPanel)
+            const tabIndex = panelId === 'fileTreePanel' ? 0 : 1;
+            const clickedTab = document.querySelectorAll('.sidebar-tab')[tabIndex];
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+                console.log('탭 활성화:', panelId);
+            }
+            
+            // 해당 패널 활성화
+            const targetPanel = document.getElementById(panelId);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+                console.log('패널 활성화:', panelId);
+                
+                // 커널 패널이 활성화되면 정보 업데이트
+                if (panelId === 'kernelPanel') {
+                    updateKernelInfo();
+                    // checkKernelStatus(); // 제거
+                }
+            }
+        }
+
+        function updateKernelInfo() {
+            // 현재 활성 파일의 커널 정보 표시
+            if (activeFile && fileKernels[activeFile]) {
+                document.getElementById('currentKernelInfo').textContent = 
+                    `${activeFile.split('/').pop()} (${fileKernels[activeFile]})`;
+                
+                // 커널 상태 표시 업데이트
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 활성';
+                    displayElement.style.color = '#68d391';
+                }
+            } else {
+                document.getElementById('currentKernelInfo').textContent = '없음';
+                
+                // 커널 상태 표시 업데이트
+                const displayElement = document.getElementById('kernelStatusDisplay');
+                if (displayElement) {
+                    displayElement.textContent = '커널 상태: 비활성';
+                    displayElement.style.color = '#a0aec0';
+                }
+            }
+            
+            // 열린 파일 목록 표시
+            const openFilesList = document.getElementById('openFilesList');
+            if (openFiles.length > 0) {
+                openFilesList.innerHTML = openFiles.map(path => 
+                    `<div style="margin-bottom: 0.3rem; ${path === activeFile ? 'color: #63b3ed;' : ''}">${path.split('/').pop()}</div>`
+                ).join('');
+            } else {
+                openFilesList.innerHTML = '없음';
+            }
+            
+            // 모든 커널 목록 표시
+            const allKernelsList = document.getElementById('allKernelsList');
+            const kernelEntries = Object.entries(fileKernels);
+            if (kernelEntries.length > 0) {
+                allKernelsList.innerHTML = kernelEntries.map(([filePath, kernelId]) => {
+                    const fileName = filePath.split('/').pop();
+                    const isActive = filePath === activeFile;
+                    return `
+                        <div style="margin-bottom: 0.5rem; padding: 0.3rem; background: ${isActive ? '#2c5282' : '#4a5568'}; border-radius: 4px; border-left: 3px solid ${isActive ? '#63b3ed' : '#718096'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="${isActive ? 'color: #63b3ed;' : ''}">${fileName}</span>
+                                <button onclick="shutdownKernelForFile('${filePath}')" 
+                                        style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 0.2rem 0.4rem; font-size: 0.7rem; cursor: pointer;">
+                                    종료
+                                </button>
+                            </div>
+                            <div style="font-size: 0.7rem; color: #a0aec0; margin-top: 0.2rem;">
+                                커널 ID: ${kernelId}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                allKernelsList.innerHTML = '없음';
+            }
+        }
+
+        function cleanupInactiveKernels() {
+            if (!confirm('12시간 이상 비활성인 커널들을 정리하시겠습니까?')) {
+                return;
+            }
+
+            fetch('/api/kernels/cleanup-inactive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 성공 메시지 표시
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #22543d;
+                        color: #9ae6b4;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    successDiv.textContent = data.message;
+                    document.body.appendChild(successDiv);
+                    
+                    // 3초 후 자동 제거
+                    setTimeout(() => {
+                        successDiv.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }, 3000);
+
+                    // UI 업데이트
+                    updateKernelInfo();
+                } else {
+                    alert(data.error || '비활성 커널 정리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('비활성 커널 정리 실패:', error);
+                alert('비활성 커널 정리에 실패했습니다.');
+            });
+        }
+
+        function cleanupAllKernels() {
+            if (!confirm('모든 커널을 정리하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+
+            fetch('/api/kernels/cleanup-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 성공 메시지 표시
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #742a2a;
+                        color: #feb2b2;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    successDiv.textContent = data.message;
+                    document.body.appendChild(successDiv);
+                    
+                    // 3초 후 자동 제거
+                    setTimeout(() => {
+                        successDiv.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }, 3000);
+
+                    // 모든 커널 ID 제거
+                    fileKernels = {};
+                    
+                    // UI 업데이트
+                    updateKernelInfo();
+                    
+                    // 현재 활성 파일의 커널 정보도 초기화
+                    if (activeFile) {
+                        document.getElementById('currentKernelInfo').textContent = '없음';
+                        document.getElementById('kernelStatusText').textContent = '커널 없음';
+                        
+                        // 커널 상태 표시 업데이트
+                        const displayElement = document.getElementById('kernelStatusDisplay');
+                        if (displayElement) {
+                            displayElement.textContent = '커널 상태: 비활성';
+                            displayElement.style.color = '#a0aec0';
+                        }
+                    }
+                } else {
+                    alert(data.error || '모든 커널 정리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('모든 커널 정리 실패:', error);
+                alert('모든 커널 정리에 실패했습니다.');
+            });
+        }
+
+        // 주기적으로 커널 상태 확인 - 제거
+        // setInterval(checkKernelStatus, 10000);
+
+        // crawl 셀 초기화
+        function initializeCrawlCell(cellId, content) {
+            try {
+                let crawlData;
+                
+                // content가 이미 객체인지 확인
+                if (typeof content === 'object' && content !== null) {
+                    // 이미 객체라면 그대로 사용
+                    crawlData = content;
+                } else {
+                    // content가 문자열이 아닌 경우 문자열로 변환
+                    let contentStr = content;
+                    if (typeof content !== 'string') {
+                        contentStr = String(content);
+                    }
+                    
+                    // 빈 문자열이거나 "[object Object]"인 경우 기본값 사용
+                    if (!contentStr || contentStr === '[object Object]' || contentStr.trim() === '') {
+                        crawlData = { job_type: 'do', action: 'click', params: {} };
+                    } else {
+                        crawlData = JSON.parse(contentStr);
+                    }
+                }
+                
+                // 기본값 추가
+                crawlData = addDefaultParams(crawlData);
+                
+                const cell = fileCells[activeFile].find(c => c.id === cellId);
+                if (cell) {
+                    cell.crawl_data = crawlData;
+                }
+                
+                // Job Type 설정
+                const jobTypeSelect = document.querySelector(`#${cellId} .crawl-job-type`);
+                if (jobTypeSelect) {
+                    jobTypeSelect.value = crawlData.job_type || 'do';
+                    updateCrawlActions(cellId, crawlData.job_type || 'do');
+                    
+                    // Action 설정 (약간의 지연 후)
+                    setTimeout(() => {
+                        const actionSelect = document.querySelector(`#${cellId} .crawl-action`);
+                        if (actionSelect && crawlData.action) {
+                            actionSelect.value = crawlData.action;
+                            renderCrawlParams(cellId, crawlData.job_type, crawlData.action);
+                            
+                            // 파라미터 값들 복원 (약간의 지연 후)
+                            setTimeout(() => {
+                                if (crawlData.params) {
+                                    Object.keys(crawlData.params).forEach(paramName => {
+                                        if (paramName === 'focus') {
+                                            // focus 파라미터 특별 처리
+                                            const focusData = crawlData.params[paramName];
+                                            if (typeof focusData === 'object') {
+                                                const focusType = Object.keys(focusData)[0];
+                                                const focusValue = focusData[focusType];
+                                                
+                                                const focusTypeSelect = document.querySelector(`#${cellId} select[name="focus_type"]`);
+                                                const focusXpathInput = document.querySelector(`#${cellId} input[name="focus_xpath"]`);
+                                                
+                                                if (focusTypeSelect && focusXpathInput) {
+                                                    // focus 타입 설정
+                                                    focusTypeSelect.value = focusType;
+                                                    // xpath 값 복원
+                                                    focusXpathInput.value = focusValue;
+                                                    console.log(`Focus 파라미터 복원: ${focusType} = ${focusValue}`);
+                                                }
+                                            }
+                                        } else {
+                                            const paramInput = document.querySelector(`#${cellId} input[name="${paramName}"], #${cellId} select[name="${paramName}"]`);
+                                            if (paramInput) {
+                                                paramInput.value = crawlData.params[paramName];
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                                // XML 출력이 활성화되어 있다면 초기 XML 생성
+                                const xmlToggle = document.getElementById(`xml-toggle-${cellId}`);
+                                if (xmlToggle && xmlToggle.checked) {
+                                    generateJsonOutput(cellId);
+                                    
+                                    // JSON textarea 크기 자동 조정
+                                    setTimeout(() => {
+                                        const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+                                        if (jsonTextarea) {
+                                            autoResizeTextarea(jsonTextarea);
+                                        }
+                                    }, 100);
+                                }
+                            }, 50);
+                        }
+                    }, 50);
+                }
+            } catch (e) {
+                console.error('Crawl 셀 초기화 오류:', e);
+            }
+        }
+
+        // crawl 셀 업데이트
+        function updateCrawlCell(cellId, field, value) {
+            const cell = fileCells[activeFile].find(c => c.id === cellId);
+            if (!cell) return;
+            
+            if (!cell.crawl_data) {
+                cell.crawl_data = { job_type: 'do', action: 'click', params: {} };
+            }
+            
+            if (field === 'job_type') {
+                cell.crawl_data.job_type = value;
+                cell.crawl_data.action = '';
+                cell.crawl_data.params = {};
+                updateCrawlActions(cellId, value);
+            } else if (field === 'action') {
+                cell.crawl_data.action = value;
+                renderCrawlParams(cellId, cell.crawl_data.job_type, value);
+                
+                // action이 변경되면 기본값 추가
+                cell.crawl_data = addDefaultParams(cell.crawl_data);
+            } else if (field.startsWith('param_')) {
+                const paramName = field.replace('param_', '');
+                cell.crawl_data.params[paramName] = value;
+                
+                // 동적 파라미터 처리 (key_count, arg_count 변경 시)
+                if (paramName === 'key_count' && cell.crawl_data.job_type === 'data' && cell.crawl_data.action === 'key_to_list') {
+                    handleKeyCountChange(cellId, value);
+                } else if (paramName === 'arg_count' && cell.crawl_data.job_type === 'python' && cell.crawl_data.action === 'file') {
+                    handleArgCountChange(cellId, value);
+                }
+            }
+            
+            // 셀 내용 업데이트
+            cell.content = JSON.stringify(cell.crawl_data, null, 2);
+            
+            // JSON 출력이 활성화되어 있다면 자동 업데이트
+            const xmlToggle = document.getElementById(`xml-toggle-${cellId}`);
+            if (xmlToggle && xmlToggle.checked) {
+                setTimeout(() => {
+                    generateJsonOutput(cellId);
+                }, 100);
+            }
+        }
+
+        // crawl 액션 업데이트 - 모든 키를 동적으로 생성
+        function updateCrawlActions(cellId, jobType) {
+            const actionSelect = document.querySelector(`#${cellId} .crawl-action`);
+            if (!actionSelect) return;
+            
+            actionSelect.innerHTML = '<option value="">선택하세요</option>';
+            
+            // 액션 라벨 동적으로 업데이트
+            const actionLabel = document.getElementById(`action-label-${cellId}`);
+            if (actionLabel) {
+                const labelMap = {
+                    'do': 'Action:',
+                    'find': 'Find Type:',
+                    'request': 'Request Type:',
+                    'data': 'Convert Type:',
+                    'save': 'Save Type:',
+                    'load': 'Load Type:',
+                    'python': 'Python Type:',
+                    'wait': 'Wait Type:',
+                    'test': 'Test Type:'
+                };
+                actionLabel.textContent = labelMap[jobType] || 'Action:';
+            }
+            
+            // job_types에서 동적으로 액션 목록 가져오기
+            if (window.jobTypes && window.jobTypes[jobType]) {
+                const jobTypeData = window.jobTypes[jobType];
+                
+                // jobTypeData에서 _types나 actions로 끝나는 키를 동적으로 찾기
+                const actionTypeKeys = Object.keys(jobTypeData).filter(key => 
+                    key.endsWith('_types') || key === 'actions'
+                );
+                
+                if (actionTypeKeys.length > 0) {
+                    // job 타입에 맞는 정확한 액션 타입 키 찾기
+                    let actionType;
+                    if (jobType === 'do') {
+                        actionType = 'actions';
+                    } else if (jobType === 'find') {
+                        actionType = 'find_types';
+                    } else if (jobType === 'request') {
+                        actionType = 'request_types';
+                    } else if (jobType === 'data') {
+                        actionType = 'convert_types';
+                    } else if (jobType === 'save') {
+                        actionType = 'save_types';
+                    } else if (jobType === 'load') {
+                        actionType = 'load_types';
+                    } else if (jobType === 'python') {
+                        actionType = 'python_types';
+                    } else if (jobType === 'wait') {
+                        actionType = 'wait_types';
+                    } else if (jobType === 'test') {
+                        actionType = 'test_types';
+                    } else {
+                        actionType = actionTypeKeys[0]; // 기본값
+                    }
+                    
+                    const actions = Object.keys(jobTypeData[actionType]);
+                    
+                    actions.forEach(action => {
+                        const option = document.createElement('option');
+                        option.value = action;
+                        // JOB_TYPES에서 name을 가져오거나 기본값 사용
+                        const actionData = jobTypeData[actionType][action];
+                        const displayName = actionData && actionData.name ? actionData.name : action.charAt(0).toUpperCase() + action.slice(1);
+                        option.textContent = displayName;
+                        actionSelect.appendChild(option);
+                    });
+                }
+            }
+            
+            // 파라미터 영역 초기화
+            const paramsDiv = document.querySelector(`#crawl-params-${cellId}`);
+            if (paramsDiv) {
+                paramsDiv.innerHTML = '';
+            }
+        }
+
+        // crawl 파라미터 렌더링
+        function renderCrawlParams(cellId, jobType, action) {
+            const paramsDiv = document.querySelector(`#crawl-params-${cellId}`);
+            if (!paramsDiv) return;
+            
+            paramsDiv.innerHTML = '';
+            
+            const params = getCrawlParams(jobType, action);
+            params.forEach(param => {
+                const paramField = document.createElement('div');
+                paramField.className = 'crawl-param-field';
+                
+                const label = document.createElement('label');
+                label.textContent = param.label;
+                
+                let input;
+                if (param.name === 'focus') {
+                    // focus 콤보박스 (xpath, selector, current)
+                    const focusTypeSelect = document.createElement('select');
+                    focusTypeSelect.name = 'focus_type';
+                    ['xpath', 'selector', 'current'].forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        focusTypeSelect.appendChild(option);
+                    });
+                    
+                    // xpath 입력란 (항상 보임)
+                    const focusXpathInput = document.createElement('input');
+                    focusXpathInput.name = 'focus_xpath';
+                    focusXpathInput.type = 'text';
+                    focusXpathInput.placeholder = 'xpath 값 (예: //button[@id="login"])';
+                    focusXpathInput.style.marginLeft = '0.5em';
+                    
+                    // current 선택 시 xpath 입력란 숨김
+                    focusTypeSelect.onchange = (e) => {
+                        if (e.target.value === 'current') {
+                            focusXpathInput.style.display = 'none';
+                        } else {
+                            focusXpathInput.style.display = '';
+                        }
+                    };
+                    
+                    paramField.appendChild(label);
+                    paramField.appendChild(focusTypeSelect);
+                    paramField.appendChild(focusXpathInput);
+                    paramsDiv.appendChild(paramField);
+                    return;
+                }
+                if (param.type === 'select') {
+                    input = document.createElement('select');
+                    input.name = param.name;
+                    param.options.forEach(option => {
+                        const opt = document.createElement('option');
+                        opt.value = option.value;
+                        opt.textContent = option.label;
+                        input.appendChild(opt);
+                    });
+                } else {
+                    input = document.createElement('input');
+                    input.name = param.name;
+                    input.type = param.type || 'text';
+                    input.placeholder = param.placeholder || '';
+                }
+                input.onchange = (e) => {
+                    updateCrawlCell(cellId, `param_${param.name}`, e.target.value);
+                    if (param.name === 'key_count' && jobType === 'data' && action === 'key_to_list') {
+                        handleKeyCountChange(cellId, e.target.value);
+                    } else if (param.name === 'arg_count' && jobType === 'python' && action === 'file') {
+                        handleArgCountChange(cellId, e.target.value);
+                    }
+                };
+                paramField.appendChild(label);
+                paramField.appendChild(input);
+                paramsDiv.appendChild(paramField);
+            });
+        }
+        
+        // key_count 변경 시 동적 키 입력 필드 생성
+        function handleKeyCountChange(cellId, keyCount) {
+            const paramsDiv = document.querySelector(`#crawl-params-${cellId}`);
+            if (!paramsDiv) return;
+            
+            // 기존 key_ 필드들 제거
+            const existingKeyFields = paramsDiv.querySelectorAll('.dynamic-key-field');
+            existingKeyFields.forEach(field => field.remove());
+            
+            // 새로운 key_ 필드들 생성
+            for (let i = 0; i < parseInt(keyCount); i++) {
+                const paramField = document.createElement('div');
+                paramField.className = 'crawl-param-field dynamic-key-field';
+                
+                const label = document.createElement('label');
+                label.textContent = `Key ${i}`;
+                
+                const input = document.createElement('input');
+                input.name = `key_${i}`;
+                input.type = 'text';
+                input.placeholder = `data_key_${i}`;
+                
+                input.onchange = (e) => updateCrawlCell(cellId, `param_key_${i}`, e.target.value);
+                
+                paramField.appendChild(label);
+                paramField.appendChild(input);
+                paramsDiv.appendChild(paramField);
+            }
+        }
+        
+        // arg_count 변경 시 동적 from_ 입력 필드 생성
+        function handleArgCountChange(cellId, argCount) {
+            const paramsDiv = document.querySelector(`#crawl-params-${cellId}`);
+            if (!paramsDiv) return;
+            
+            // 기존 from_ 필드들 제거
+            const existingFromFields = paramsDiv.querySelectorAll('.dynamic-from-field');
+            existingFromFields.forEach(field => field.remove());
+            
+            // 새로운 from_ 필드들 생성
+            for (let i = 0; i < parseInt(argCount); i++) {
+                const paramField = document.createElement('div');
+                paramField.className = 'crawl-param-field dynamic-from-field';
+                
+                const label = document.createElement('label');
+                label.textContent = `From ${i}`;
+                
+                const input = document.createElement('input');
+                input.name = `from_${i}`;
+                input.type = 'text';
+                input.placeholder = `data_source_${i}`;
+                
+                input.onchange = (e) => updateCrawlCell(cellId, `param_from_${i}`, e.target.value);
+                
+                paramField.appendChild(label);
+                paramField.appendChild(input);
+                paramsDiv.appendChild(paramField);
+            }
+        }
+
+        // 파라미터 타입 결정 함수
+        function getParamType(param) {
+            const numberParams = ['speed', 'sleep', 'max_time', 'speed_variation', 'wait_time', 'key_count', 'arg_count', 'time'];
+            const selectParams = ['find_range', 'print_result'];
+            
+            if (selectParams.includes(param)) {
+                return 'select';
+            } else if (numberParams.includes(param)) {
+                return 'number';
+            } else {
+                return 'text';
+            }
+        }
+
+        // 파라미터 옵션 생성 함수
+        function getParamOptions(param) {
+            if (param === 'find_range') {
+                return [
+                    { value: 'self', label: 'Self' },
+                    { value: 'all', label: 'All' },
+                    { value: 'contain', label: 'Contain' },
+                    { value: 'first', label: 'First' },
+                    { value: 'last', label: 'Last' },
+                    { value: 'next', label: 'Next' },
+                    { value: 'parent', label: 'Parent' },
+                    { value: 'children', label: 'Children' },
+                    { value: 'siblings', label: 'Siblings' }
+                ];
+            } else if (param === 'print_result') {
+                return [
+                    { value: 'true', label: 'True' },
+                    { value: 'false', label: 'False' }
+                ];
+            }
+            return undefined;
+        }
+
+        // 파라미터 placeholder 생성 함수
+        function getParamPlaceholder(param) {
+            const placeholders = {
+                'focus': '{"xpath": "//button[@id=\'login\']"}',
+                'speed': '1.0',
+                'text': '입력할 텍스트',
+                'sleep': '1',
+                'max_time': '10',
+                'speed_variation': '0.1',
+                'value': 'true',
+                'find_item': 'main-content',
+                'find_attribute': 'data-id',
+                'url': 'https://example.com',
+                'data': '{"username": "user", "password": "pass"}',
+                'wait_time': '2',
+                'from': 'extracted_data',
+                'to': 'result_data',
+                'href_arg': 'https://',
+                'text_arg': '\\n',
+                'key_count': '3',
+                'name': 'result.xlsx',
+                'encoding': 'utf-8',
+                'script_path': 'process_data.py',
+                'arg_count': '2',
+                'time': '5',
+                'print_result': 'true',
+                'filename': 'screenshot.png'
+            };
+            return placeholders[param] || param;
+        }
+
+        // crawl 파라미터 정의 - 모든 키를 동적으로 생성
+        function getCrawlParams(jobType, action) {
+            // JOB_TYPES에서 동적으로 파라미터 가져오기
+            if (window.jobTypes && window.jobTypes[jobType]) {
+                const jobTypeData = window.jobTypes[jobType];
+                
+                // jobTypeData에서 _types나 actions로 끝나는 키를 동적으로 찾기
+                const actionTypeKeys = Object.keys(jobTypeData).filter(key => 
+                    key.endsWith('_types') || key === 'actions'
+                );
+                
+                if (actionTypeKeys.length > 0) {
+                    // job 타입에 맞는 정확한 액션 타입 키 찾기
+                    let actionType;
+                    if (jobType === 'do') {
+                        actionType = 'actions';
+                    } else if (jobType === 'find') {
+                        actionType = 'find_types';
+                    } else if (jobType === 'request') {
+                        actionType = 'request_types';
+                    } else if (jobType === 'data') {
+                        actionType = 'convert_types';
+                    } else if (jobType === 'save') {
+                        actionType = 'save_types';
+                    } else if (jobType === 'load') {
+                        actionType = 'load_types';
+                    } else if (jobType === 'python') {
+                        actionType = 'python_types';
+                    } else if (jobType === 'wait') {
+                        actionType = 'wait_types';
+                    } else if (jobType === 'test') {
+                        actionType = 'test_types';
+                    } else {
+                        actionType = actionTypeKeys[0]; // 기본값
+                    }
+                    
+                    if (jobTypeData[actionType] && jobTypeData[actionType][action]) {
+                        const actionData = jobTypeData[actionType][action];
+                        return actionData.params.map(param => ({
+                            name: param,
+                            label: param.charAt(0).toUpperCase() + param.slice(1).replace('_', ' '),
+                            type: getParamType(param),
+                            placeholder: getParamPlaceholder(param),
+                            options: getParamOptions(param)
+                        }));
+                    }
+                }
+            }
+            
+            // 기본값 (JOB_TYPES가 로드되지 않았거나 매칭되지 않는 경우)
+            const params = {
+                'save': {
+                    'excel': [
+                        { name: 'save_type', label: 'Save Type', type: 'text', placeholder: 'excel' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'result.xlsx' }
+                    ],
+                    'csv': [
+                        { name: 'save_type', label: 'Save Type', type: 'text', placeholder: 'csv' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'result.csv' },
+                        { name: 'encoding', label: 'Encoding', type: 'text', placeholder: 'utf-8' }
+                    ],
+                    'txt': [
+                        { name: 'save_type', label: 'Save Type', type: 'text', placeholder: 'txt' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'result.txt' },
+                        { name: 'encoding', label: 'Encoding', type: 'text', placeholder: 'utf-8' }
+                    ],
+                    'mysql': [
+                        { name: 'save_type', label: 'Save Type', type: 'text', placeholder: 'mysql' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'crawl_results' }
+                    ],
+                    'elasticsearch': [
+                        { name: 'save_type', label: 'Save Type', type: 'text', placeholder: 'elasticsearch' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'crawl_index' }
+                    ]
+                },
+                'load': {
+                    'excel': [
+                        { name: 'load_type', label: 'Load Type', type: 'text', placeholder: 'excel' },
+                        { name: 'from', label: 'From', type: 'text', placeholder: 'loaded_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'data.xlsx' }
+                    ],
+                    'csv': [
+                        { name: 'load_type', label: 'Load Type', type: 'text', placeholder: 'csv' },
+                        { name: 'from', label: 'From', type: 'text', placeholder: 'loaded_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'data.csv' },
+                        { name: 'encoding', label: 'Encoding', type: 'text', placeholder: 'utf-8' }
+                    ],
+                    'txt': [
+                        { name: 'load_type', label: 'Load Type', type: 'text', placeholder: 'txt' },
+                        { name: 'from', label: 'From', type: 'text', placeholder: 'loaded_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'data.txt' },
+                        { name: 'encoding', label: 'Encoding', type: 'text', placeholder: 'utf-8' }
+                    ],
+                    'mysql': [
+                        { name: 'load_type', label: 'Load Type', type: 'text', placeholder: 'mysql' },
+                        { name: 'from', label: 'From', type: 'text', placeholder: 'loaded_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'crawl_results' }
+                    ],
+                    'elasticsearch': [
+                        { name: 'load_type', label: 'Load Type', type: 'text', placeholder: 'elasticsearch' },
+                        { name: 'from', label: 'From', type: 'text', placeholder: 'loaded_data' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'crawl_index' }
+                    ]
+                },
+                'python': {
+                    'file': [
+                        { name: 'python_type', label: 'Python Type', type: 'text', placeholder: 'file' },
+                        { name: 'script_path', label: 'Script Path', type: 'text', placeholder: 'process_data.py' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result' },
+                        { name: 'arg_count', label: 'Arg Count', type: 'number', placeholder: '2' }
+                    ],
+                    'code': [
+                        { name: 'python_type', label: 'Python Type', type: 'text', placeholder: 'code' },
+                        { name: 'code', label: 'Code', type: 'text', placeholder: 'print(\'Hello World\')' },
+                        { name: 'to', label: 'To', type: 'text', placeholder: 'result' }
+                    ]
+                },
+                'wait': {
+                    'fixed_time': [
+                        { name: 'wait_type', label: 'Wait Type', type: 'text', placeholder: 'fixed_time' },
+                        { name: 'time', label: 'Time', type: 'number', placeholder: '2.5' }
+                    ],
+                    'load_time': [
+                        { name: 'wait_type', label: 'Wait Type', type: 'text', placeholder: 'load_time' }
+                    ]
+                },
+                'test': {
+                    'variable': [
+                        { name: 'test_type', label: 'Test Type', type: 'text', placeholder: 'variable' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'my_var' },
+                        { name: 'value', label: 'Value', type: 'text', placeholder: 'Hello World' },
+                        { name: 'print_result', label: 'Print Result', type: 'select', options: [
+                            { value: 'true', label: 'True' },
+                            { value: 'false', label: 'False' }
+                        ]}
+                    ],
+                    'list': [
+                        { name: 'test_type', label: 'Test Type', type: 'text', placeholder: 'list' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'my_list' },
+                        { name: 'items', label: 'Items', type: 'text', placeholder: 'apple,banana,orange' },
+                        { name: 'print_result', label: 'Print Result', type: 'select', options: [
+                            { value: 'true', label: 'True' },
+                            { value: 'false', label: 'False' }
+                        ]}
+                    ],
+                    'dict': [
+                        { name: 'test_type', label: 'Test Type', type: 'text', placeholder: 'dict' },
+                        { name: 'name', label: 'Name', type: 'text', placeholder: 'my_dict' },
+                        { name: 'key_value_pairs', label: 'Key Value Pairs', type: 'text', placeholder: 'name:John,age:25,city:Seoul' },
+                        { name: 'print_result', label: 'Print Result', type: 'select', options: [
+                            { value: 'true', label: 'True' },
+                            { value: 'false', label: 'False' }
+                        ]}
+                    ]
+                }
+            };
+            
+            return params[jobType]?.[action] || [];
+        }
+
+        // crawl 셀 추가 함수
+        function addCrawlCell(cellId = null) {
+            if (!activeFile) return;
+            
+            const cells = fileCells[activeFile] || [];
+            const crawlData = {
+                job_type: 'do',
+                action: 'click',
+                params: {
+                    focus: '{"xpath": "//button[@id=\'login\']"}',
+                    speed: 1.0
+                }
+            };
+            
+            // 기본값 추가
+            const crawlDataWithDefaults = addDefaultParams(crawlData);
+            
+            const cell = {
+                id: `cell-${activeFile.replace(/[^a-zA-Z0-9]/g, '_')}-${cells.length}`,
+                content: JSON.stringify(crawlDataWithDefaults, null, 2),
+                output: '',
+                status: '',
+                cell_type: 'crawl_ui',
+                crawl_data: crawlDataWithDefaults, // 기본값이 포함된 crawl_data 설정
+                name: `Crawl_${cells.length + 1}` // 기본 이름 설정
+            };
+            
+            if (cellId) {
+                // 특정 셀 다음에 추가
+                const currentIndex = cells.findIndex(c => c.id === cellId);
+                if (currentIndex !== -1) {
+                    cells.splice(currentIndex + 1, 0, cell);
+                } else {
+                    cells.push(cell);
+                }
+            } else {
+                // 맨 마지막에 추가
+                cells.push(cell);
+            }
+            
+            fileCells[activeFile] = cells;
+            renderNotebookCells();
+            
+            // 새 셀에 포커스
+            setTimeout(() => {
+                const newCell = document.getElementById(cell.id);
+                if (newCell) {
+                    newCell.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+            
+            return cell;
+        }
+
+        // JSON 출력 토글 함수
+        function toggleJsonOutput(cellId) {
+            const jsonSection = document.getElementById(`xml-output-${cellId}`);
+            const controlsSection = document.getElementById(`crawl-controls-${cellId}`);
+            const toggle = document.getElementById(`xml-toggle-${cellId}`);
+            
+            if (toggle.checked) {
+                // JSON 출력 활성화: combobox UI 숨기고 JSON 출력 표시
+                controlsSection.style.display = 'none';
+                jsonSection.style.display = 'block';
+                
+                // JSON textarea 크기 자동 조정
+                setTimeout(() => {
+                    const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+                    if (jsonTextarea) {
+                        // 이미 내용이 있으면 덮어쓰지 않음
+                        if (!jsonTextarea.value.trim()) {
+                            generateJsonOutput(cellId);
+                        }
+                        autoResizeTextarea(jsonTextarea);
+                    }
+                }, 100);
+            } else {
+                // JSON 출력 비활성화: JSON 출력 숨기고 combobox UI 표시
+                jsonSection.style.display = 'none';
+                controlsSection.style.display = 'block';
+            }
+        }
+
+        // JSON 출력 생성 함수
+        function generateJsonOutput(cellId) {
+            const cells = fileCells[activeFile] || [];
+            const cell = cells.find(c => c.id === cellId);
+            if (!cell) return;
+
+            try {
+                // crawl 셀의 현재 데이터를 가져옴
+                let crawlData;
+                
+                // crawl_data가 있으면 그것을 사용 (UI에서 변경된 데이터)
+                if (cell.crawl_data) {
+                    crawlData = cell.crawl_data;
+                } else {
+                    // crawl_data가 없으면 content를 파싱
+                    let contentStr = cell.content;
+                    
+                    // content가 문자열이 아닌 경우 문자열로 변환
+                    if (typeof contentStr !== 'string') {
+                        contentStr = String(contentStr);
+                    }
+                    
+                    if (contentStr) {
+                        crawlData = JSON.parse(contentStr);
+                    } else {
+                        crawlData = { job_type: 'do', action: '', params: {} };
+                    }
+                }
+
+                // JSON 출력 영역에 표시 (기본값 추가하지 않고 그대로 표시)
+                const jsonContent = JSON.stringify(crawlData, null, 2);
+                
+                // JSON 출력 영역에 표시
+                const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+                if (jsonTextarea) {
+                    // 이미 사용자가 입력한 내용이 있으면 덮어쓰지 않음
+                    if (!jsonTextarea.value.trim()) {
+                        jsonTextarea.value = jsonContent;
+                    }
+                    autoResizeTextarea(jsonTextarea);
+                }
+            } catch (error) {
+                console.error('JSON 생성 오류:', error);
+                const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+                if (jsonTextarea) {
+                    jsonTextarea.value = `// JSON 생성 오류: ${error.message}`;
+                }
+            }
+        }
+
+        // 파라미터에 기본값 추가하는 함수
+        function addDefaultParams(crawlData) {
+            const jobType = crawlData.job_type || 'do';
+            const action = crawlData.action || '';
+            
+            // 기본 파라미터 정의
+            const defaultParams = {
+                'do': {
+                    'click': { focus: '{"xpath": "//button[@id=\'login\']"}', speed: 1.0 },
+                    'text': { focus: '{"xpath": "//input[@name=\'username\']"}', text: '입력할 텍스트', speed: 1.0 },
+                    'clear': { focus: '{"xpath": "//input[@name=\'username\']"}', speed: 1.0 },
+                    'enter': {},
+                    'pagedown': {},
+                    'radio': { focus: '{"xpath": "//input[@type=\'radio\']"}', value: 'true' },
+                    'scroll': { sleep: 1, max_time: 10, speed_variation: 0.1 },
+                    'scroll_to_element': { focus: '{"xpath": "//div[@class=\'content\']"}', sleep: 1, speed: 0.5, speed_variation: 0.1, max_time: 10 }
+                },
+                'find': {
+                    'id': { find_item: 'main-content', find_range: 'first' },
+                    'class': { find_item: 'title', find_range: 'first' },
+                    'name': { find_item: 'div', find_range: 'first' },
+                    'text': { find_item: '로그인', find_range: 'first' },
+                    'attribute': { find_attribute: 'data-id', find_item: '123', find_range: 'first' }
+                },
+                'data': {
+                    'to_html': { from: 'extracted_data', to: 'html_data' },
+                    'to_xpath': { from: 'extracted_data', to: 'xpath_data' },
+                    'to_dataframe': { from: 'extracted_data', to: 'df_data' },
+                    'get_href': { from: 'link_data', to: 'href_data', href_arg: 'https://' },
+                    'get_hrefs': { from: 'links_data', to: 'hrefs_data', href_arg: 'https://' },
+                    'get_text_all': { from: 'html_data', to: 'text_data', text_arg: '\\n' },
+                    'get_texts_all': { from: 'html_data', to: 'texts_data', text_arg: '\\n' },
+                    'get_text_all_tagonly': { from: 'html_data', to: 'tag_text_data', text_arg: '\\n' },
+                    'get_text_all_without_script': { from: 'html_data', to: 'clean_text_data', text_arg: '\\n' },
+                    'key_to_list': { to: 'combined_list', key_count: 3 }
+                },
+                'save': {
+                    'excel': { save_type: 'excel', to: 'result_data', name: 'result.xlsx' },
+                    'csv': { save_type: 'csv', to: 'result_data', name: 'result.csv', encoding: 'utf-8' },
+                    'txt': { save_type: 'txt', to: 'result_data', name: 'result.txt', encoding: 'utf-8' },
+                    'mysql': { save_type: 'mysql', to: 'result_data', name: 'crawl_results' },
+                    'elasticsearch': { save_type: 'elasticsearch', to: 'result_data', name: 'crawl_index' }
+                },
+                'load': {
+                    'excel': { load_type: 'excel', from: 'loaded_data', name: 'data.xlsx' },
+                    'csv': { load_type: 'csv', from: 'loaded_data', name: 'data.csv', encoding: 'utf-8' },
+                    'txt': { load_type: 'txt', from: 'loaded_data', name: 'data.txt', encoding: 'utf-8' },
+                    'mysql': { load_type: 'mysql', from: 'loaded_data', name: 'crawl_results' },
+                    'elasticsearch': { load_type: 'elasticsearch', from: 'loaded_data', name: 'crawl_index' }
+                },
+                'python': {
+                    'file': { python_type: 'file', script_path: 'process_data.py', to: 'result', arg_count: 2 },
+                    'code': { python_type: 'code', code: 'print(\'Hello World\')', to: 'result' }
+                },
+                'wait': {
+                    'fixed_time': { wait_type: 'fixed_time', time: 2.5 },
+                    'load_time': { wait_type: 'load_time' }
+                },
+                'request': {
+                    'get': { url: 'https://example.com' },
+                    'post': { url: 'https://api.example.com', data: '{"username": "user", "password": "pass"}' },
+                    'selenium': { url: 'https://example.com', wait_time: 2 }
+                },
+                'test': {
+                    'variable': { test_type: 'variable', name: 'my_var', value: 'Hello World', print_result: 'true' },
+                    'list': { test_type: 'list', name: 'my_list', items: 'apple,banana,orange', print_result: 'true' },
+                    'dict': { test_type: 'dict', name: 'my_dict', key_value_pairs: 'name:John,age:25,city:Seoul', print_result: 'true' }
+                }
+            };
+
+            // 현재 job_type과 action에 대한 기본 파라미터 가져오기
+            const defaults = defaultParams[jobType]?.[action] || {};
+            
+            // 기존 파라미터와 기본값 병합
+            const mergedParams = { ...defaults, ...crawlData.params };
+            
+            return {
+                ...crawlData,
+                params: mergedParams
+            };
+        }
+
+        // JSON 내용 업데이트 함수 (수정 가능하도록)
+        function updateJsonContent(cellId) {
+            const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+            if (!jsonTextarea) return;
+
+            try {
+                // JSON을 파싱하여 crawl 데이터로 변환
+                const jsonContent = jsonTextarea.value.trim();
+                
+                // 빈 내용이면 무시
+                if (!jsonContent) {
+                    return;
+                }
+                
+                const crawlData = JSON.parse(jsonContent);
+                
+                // 셀 데이터 업데이트
+                const cells = fileCells[activeFile] || [];
+                const cell = cells.find(c => c.id === cellId);
+                if (cell) {
+                    cell.content = JSON.stringify(crawlData, null, 2);
+                    cell.crawl_data = crawlData;
+                    
+                    // crawl 셀 UI 업데이트
+                    updateCrawlCellFromJson(cellId, crawlData);
+                }
+            } catch (error) {
+                console.error('JSON 파싱 오류:', error);
+                // 오류가 있어도 사용자가 계속 편집할 수 있도록 함
+                // 오류 메시지를 textarea에 표시하지 않음
+            }
+        }
+
+        // JSON에서 파싱된 데이터로 crawl 셀 UI 업데이트
+        function updateCrawlCellFromJson(cellId, crawlData) {
+            // job_type 업데이트
+            const jobTypeSelect = document.querySelector(`#${cellId} .crawl-job-type`);
+            if (jobTypeSelect && crawlData.job_type) {
+                jobTypeSelect.value = crawlData.job_type;
+                // job_type이 변경되면 action 옵션도 업데이트
+                updateCrawlActions(cellId, crawlData.job_type);
+            }
+            
+            // action 업데이트 (약간의 지연 후)
+            setTimeout(() => {
+                const actionSelect = document.querySelector(`#${cellId} .crawl-action`);
+                if (actionSelect && crawlData.action) {
+                    actionSelect.value = crawlData.action;
+                    // action이 변경되면 파라미터 필드들도 업데이트
+                    renderCrawlParams(cellId, crawlData.job_type, crawlData.action);
+                    
+                    // 파라미터 값들 복원 (약간의 지연 후)
+                    setTimeout(() => {
+                        if (crawlData.params) {
+                            Object.keys(crawlData.params).forEach(paramName => {
+                                const paramInput = document.querySelector(`#${cellId} input[name="${paramName}"], #${cellId} select[name="${paramName}"]`);
+                                if (paramInput) {
+                                    paramInput.value = crawlData.params[paramName];
+                                }
+                            });
+                        }
+                    }, 50);
+                }
+            }, 50);
+        }
+
+        // JSON 출력 복사 함수
+        function copyJsonOutput(cellId) {
+            const jsonTextarea = document.getElementById(`xml-content-${cellId}`);
+            if (!jsonTextarea) return;
+
+            jsonTextarea.select();
+            jsonTextarea.setSelectionRange(0, 99999); // 모바일을 위한 설정
+
+            try {
+                document.execCommand('copy');
+                
+                // 복사 성공 메시지 표시
+                const copyBtn = document.querySelector(`#xml-output-${cellId} .xml-copy-btn`);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓ 복사됨';
+                copyBtn.style.background = '#48bb78';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '';
+                }, 2000);
+            } catch (err) {
+                console.error('복사 실패:', err);
+                alert('JSON 복사에 실패했습니다.');
+            }
+        }
+
+        // crawl 셀 실행 시 JSON 출력도 함께 업데이트
+        function runCrawlCell(cellId) {
+            // 기존 실행 로직...
+            
+            // JSON 출력이 활성화되어 있다면 업데이트
+            const toggle = document.getElementById(`xml-toggle-${cellId}`);
+            if (toggle && toggle.checked) {
+                setTimeout(() => {
+                    generateJsonOutput(cellId);
+                }, 100);
+            }
+        }
+
+        // 파일 업데이트 확인 및 reload 함수
+        function checkFileUpdatedAndReload(filePath, expectedContent, retryCount = 0) {
+            const maxRetries = 10; // 최대 10번 시도
+            const retryDelay = 200; // 200ms 간격
+            
+            fetch(`/api/files/content?path=${encodeURIComponent(filePath)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 파일 내용이 예상한 내용과 일치하는지 확인
+                        if (data.content === expectedContent) {
+                            console.log('파일 업데이트 확인됨, reload 시작');
+                            // 파일이 업데이트되었으므로 reload
+                            const fileName = filePath.split('/').pop();
+                            const file = { path: filePath, name: fileName };
+                            selectFile(file);
+                        } else if (retryCount < maxRetries) {
+                            // 아직 업데이트되지 않았으므로 다시 시도
+                            console.log(`파일 업데이트 대기 중... (${retryCount + 1}/${maxRetries})`);
+                            setTimeout(() => {
+                                checkFileUpdatedAndReload(filePath, expectedContent, retryCount + 1);
+                            }, retryDelay);
+                        } else {
+                            console.log('파일 업데이트 확인 실패, 수동 reload');
+                            // 최대 시도 횟수를 초과했으므로 강제 reload
+                            const fileName = filePath.split('/').pop();
+                            const file = { path: filePath, name: fileName };
+                            selectFile(file);
+                        }
+                    } else {
+                        console.error('파일 내용 확인 실패:', data.message);
+                        // 확인 실패 시 강제 reload
+                        const fileName = filePath.split('/').pop();
+                        const file = { path: filePath, name: fileName };
+                        selectFile(file);
+                    }
+                })
+                .catch(error => {
+                    console.error('파일 업데이트 확인 중 오류:', error);
+                    // 오류 발생 시 강제 reload
+                    const fileName = filePath.split('/').pop();
+                    const file = { path: filePath, name: fileName };
+                    selectFile(file);
+                });
+        }
+
+        function renderNotebookCells() {
+            const notebookCells = document.getElementById('notebookCells');
+            notebookCells.innerHTML = '';
+            if (!activeFile || !fileCells[activeFile]) return;
+            fileCells[activeFile].forEach((cell, idx) => {
+                cell.id = `cell-${activeFile.replace(/[^a-zA-Z0-9]/g, '_')}-${idx}`;
+                const cellDiv = createCellElement(cell, idx);
+                notebookCells.appendChild(cellDiv);
+            });
+            
+            // 모든 셀의 textarea 크기 자동 조정
+            setTimeout(() => {
+                document.querySelectorAll('.cell-input').forEach(textarea => {
+                    autoResizeTextarea(textarea);
+                });
+            }, 100);
+        }
+
+        // 셀 이름 업데이트 함수
+        function updateCellName(cellId, name) {
+            const cells = fileCells[activeFile] || [];
+            const cell = cells.find(c => c.id === cellId);
+            if (cell) {
+                cell.name = name;
+                // 셀 이름이 변경되면 자동 저장
+                setTimeout(() => saveNotebookToFile(), 500);
+            }
+        }
+
+        // crawl 셀에 자동 번호 부여하는 함수
+        function renumberCrawlCells() {
+            if (!activeFile || !fileCells[activeFile]) return;
+            
+            const cells = fileCells[activeFile];
+            cells.forEach((cell, index) => {
+                if ((cell.cell_type === 'crawl' || cell.cell_type === 'crawl_ui' || cell.cell_type === 'crawl_json') && (!cell.name || cell.name === '')) {
+                    cell.name = `Crawl_${index + 1}`;
+                }
+            });
+            
+            renderNotebookCells();
+            saveNotebook();
+        }
+
+        function runCell(cellId) {
+            // 이미 실행 중인 셀이면 큐에 추가하지 않음
+            if (currentExecutingCell === cellId) {
+                console.log(`셀 ${cellId}는 이미 실행 중입니다.`);
+                return;
+            }
+            
+            // 이미 큐에 있는 셀이면 추가하지 않음
+            if (cellExecutionQueue.includes(cellId)) {
+                console.log(`셀 ${cellId}는 이미 큐에 있습니다.`);
+                return;
+            }
+            
+            // 큐에 셀 추가
+            cellExecutionQueue.push(cellId);
+            console.log(`셀 ${cellId}가 큐에 추가되었습니다. 현재 큐:`, cellExecutionQueue);
+            
+            // 대기중 상태로 변경
+            const statusSpan = document.querySelector(`#status-${cellId}`);
+            if (statusSpan) {
+                statusSpan.textContent = '대기중';
+                statusSpan.className = 'cell-status waiting';
+            }
+            
+            // 큐 처리 시작
+            processCellQueue();
+        }
+
+        // focus 파라미터를 올바른 구조로 저장
+        function updateFocusParam(cellId, focusType, focusValue) {
+            let value;
+            if (focusType === 'current') {
+                value = 'current';
+            } else {
+                value = {};
+                value[focusType] = focusValue;
+            }
+            updateCrawlCell(cellId, 'param_focus', value);
+        }
+
+        // 이미지 모달 보여주기
+        function showImageModal(file) {
+            // 기존 모달이 있으면 제거
+            const existingModal = document.getElementById('imageModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // 모달 생성
+            const modal = document.createElement('div');
+            modal.id = 'imageModal';
+            modal.className = 'image-modal';
+            modal.innerHTML = `
+                <div class="image-modal-content">
+                    <div class="image-modal-header">
+                        <h3>${file.name}</h3>
+                        <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
+                    </div>
+                    <div class="image-modal-body">
+                        <img src="/api/files/image?path=${encodeURIComponent(file.path)}" alt="${file.name}" style="max-width: 100%; max-height: 80vh; object-fit: contain;">
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeImageModal();
+                }
+            });
+
+            // 모달 외부 클릭으로 닫기
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeImageModal();
+                }
+            });
+        }
+
+        // 이미지 모달 닫기
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+    </script>
+
+    <style>
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .image-modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+
+        .image-modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .image-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-close:hover {
+            color: #333;
+        }
+
+        .image-modal-body {
+            padding: 20px;
+            text-align: center;
+            background: white;
+        }
+
+        /* Footer 스타일 */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-top: 1px solid #4a5568;
+            z-index: 1000;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-left, .footer-right {
+            font-size: 0.9rem;
+        }
+
+        /* 실시간 스크린샷 탭 스타일 */
+        .screenshot-tab {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px 0 0 8px;
+            padding: 1rem;
+            cursor: pointer;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+        }
+
+        .screenshot-tab:hover {
+            background: #4a5568;
+        }
+
+        .screenshot-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: #1a202c;
+            color: #e2e8f0;
+            z-index: 1999;
+            transition: right 0.3s ease;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screenshot-panel.open {
+            right: 0;
+        }
+
+        .screenshot-header {
+            background: #2d3748;
+            padding: 1rem;
+            border-bottom: 1px solid #4a5568;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .screenshot-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .screenshot-close {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screenshot-close:hover {
+            color: #f56565;
+        }
+
+        .screenshot-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .screenshot-info {
+            background: #2d3748;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .screenshot-image-container {
+            background: #2d3748;
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .screenshot-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+            border: 1px solid #4a5568;
+        }
+
+        .screenshot-status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #2d3748;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+    </style>
+</body>
+</html>
